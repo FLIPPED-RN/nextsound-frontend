@@ -93,5 +93,5 @@ export const Waveform = ({
         }
     }, [currentTime]);
 
-    return <div ref={containerRef} className="w-full rounded-xl overflow-hidden cursor-pointer" />;
+    return <div ref={containerRef} className="w-full overflow-hidden cursor-pointer" />;
 };

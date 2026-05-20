@@ -79,7 +79,7 @@ export const TrackPage = () => {
           <p className="text-lg text-[#888888]">
             {track.user?.nickname || track.user?.firstName}
           </p>
-          <p className="text-sm text-[#888888]">{track.plays_count} plays</p>
+          <p className="text-sm text-[#888888]">{track.plays_count} прослушиваний</p>
 
           <div className="flex gap-3">
             <button
@@ -114,17 +114,17 @@ export const TrackPage = () => {
       )}
 
       <div className="space-y-4">
-        <h3 className="text-xl font-bold">Comments</h3>
+        <h3 className="text-xl font-bold">Коментарии</h3>
         {user && (
           <form onSubmit={handleComment} className="flex gap-3">
             <input
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
+              placeholder="Напишите коментарий..."
               className="flex-1 px-4 py-2 bg-[#151515] rounded-xl text-white outline-none"
             />
             <button type="submit" className="bg-white text-black px-4 py-2 rounded-full font-semibold">
-              Post
+              Отправить
             </button>
           </form>
         )}
