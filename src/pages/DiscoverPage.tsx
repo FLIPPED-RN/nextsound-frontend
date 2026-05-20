@@ -10,7 +10,7 @@ export const DiscoverPage = () => {
 
   return (
     <div className="p-4 md:p-8 space-y-8">
-      <h2 className="text-3xl font-bold">Discover</h2>
+      <h2 className="text-3xl font-bold">Главная</h2>
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {Array(10).fill(0).map((_, i) => (

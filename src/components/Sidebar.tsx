@@ -4,11 +4,11 @@ import { Home, Search, Upload, ListMusic, Heart } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 
 const links = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/search', icon: Search, label: 'Search' },
-  { to: '/upload', icon: Upload, label: 'Upload' },
-  { to: '/playlists', icon: ListMusic, label: 'Playlists' },
-  { to: '/liked', icon: Heart, label: 'Favorites' },
+  { to: '/', icon: Home, label: 'Главная' },
+  { to: '/search', icon: Search, label: 'Поиск' },
+  { to: '/upload', icon: Upload, label: 'Загрузить' },
+  { to: '/playlists', icon: ListMusic, label: 'Плейлисты' },
+  { to: '/liked', icon: Heart, label: 'Либимое' },
 ];
 
 export const Sidebar = () => {

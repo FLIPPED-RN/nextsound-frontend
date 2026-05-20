@@ -1,12 +1,24 @@
-// src/pages/TrackPage.tsx
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { tracksApi } from '../api/tracks.api';
 import { commentsApi } from '../api/comments.api';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
-import { Play, Heart, Share2 } from 'lucide-react';
+import { Play, Pause, Heart, Share2 } from 'lucide-react';
 import { useState } from 'react';
+import { Waveform } from '../components/Waveform';
+
+const getUrl = (path?: string) => {
+  if (!path) return '/default-cover.png';
+  if (path.startsWith('http')) return path;
+  return `/${path.replace(/\\/g, '/')}`;
+};
+
+const getAudioUrl = (path?: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `/${path.replace(/\\/g, '/')}`;
+};
 
 export const TrackPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,15 +33,26 @@ export const TrackPage = () => {
   });
   const [commentText, setCommentText] = useState('');
   const { user } = useAuthStore();
-  const { setTrack, queue } = usePlayerStore();
+  const { currentTrack, isPlaying, progress, setTrack, togglePlay, seekTo, queue } = usePlayerStore();
   const [liked, setLiked] = useState(false);
 
-  const handlePlay = () => track && setTrack(track, queue);
+  const isThisTrackPlaying = currentTrack?.id === track?.id && isPlaying;
+
+  const handlePlay = () => {
+    if (!track) return;
+    if (isThisTrackPlaying) {
+      togglePlay();
+    } else {
+      setTrack(track, queue);
+    }
+  };
+
   const handleLike = async () => {
     if (!track || !user) return;
     await tracksApi.toggleLike(track.id);
     setLiked(!liked);
   };
+
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -40,29 +63,36 @@ export const TrackPage = () => {
 
   if (!track) return null;
 
+  const audioUrl = getAudioUrl(track.file_path);
+  const isActiveTrack = currentTrack?.id === track?.id;
+
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-      {/* Header */}
+    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row gap-6 items-start">
         <img
-          src={track.cover_path || '/default-cover.png'}
+          src={getUrl(track.cover_path)}
           alt={track.title}
           className="w-64 h-64 rounded-2xl object-cover shadow-2xl"
         />
-        <div className="space-y-3">
+        <div className="flex-1 space-y-3">
           <h1 className="text-4xl font-bold">{track.title}</h1>
           <p className="text-lg text-[#888888]">
             {track.user?.nickname || track.user?.firstName}
           </p>
           <p className="text-sm text-[#888888]">{track.plays_count} plays</p>
+
           <div className="flex gap-3">
-            <button onClick={handlePlay} className="bg-white text-black px-6 py-2.5 rounded-full font-semibold flex items-center gap-2">
-              <Play size={18} /> Play
+            <button
+              onClick={handlePlay}
+              className="bg-white text-black px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 hover:opacity-90 transition"
+            >
+              {isThisTrackPlaying ? <Pause size={18} /> : <Play size={18} />}
+              {isThisTrackPlaying ? 'Pause' : 'Play'}
             </button>
-            <button onClick={handleLike} className="p-2.5 border border-[#242424] rounded-full">
+            <button onClick={handleLike} className="p-2.5 border border-[#242424] rounded-full hover:border-white transition">
               <Heart size={18} className={liked ? 'fill-red-500 text-red-500' : ''} />
             </button>
-            <button className="p-2.5 border border-[#242424] rounded-full">
+            <button className="p-2.5 border border-[#242424] rounded-full hover:border-white transition">
               <Share2 size={18} />
             </button>
           </div>
@@ -70,7 +100,19 @@ export const TrackPage = () => {
         </div>
       </div>
 
-      {/* Comments */}
+      {audioUrl && (
+        <Waveform
+          audioUrl={audioUrl}
+          isPlaying={isActiveTrack && isPlaying}
+          currentTime={isActiveTrack ? progress : 0}
+          onPlay={() => { }}
+          onPause={() => { }}
+          onReady={(dur) => { }}
+          onTimeUpdate={(time) => { }}
+          onSeek={(time) => seekTo(time)}
+        />
+      )}
+
       <div className="space-y-4">
         <h3 className="text-xl font-bold">Comments</h3>
         {user && (
