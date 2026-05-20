@@ -1,7 +1,8 @@
-// src/pages/UploadPage.tsx
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
 import { Upload, Music } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
 
 export const UploadPage = () => {

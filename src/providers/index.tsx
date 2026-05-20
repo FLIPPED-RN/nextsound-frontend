@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
 
 const queryClient = new QueryClient({
@@ -10,7 +10,15 @@ const queryClient = new QueryClient({
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchMe = useAuthStore((s) => s.fetchMe);
-  useEffect(() => { fetchMe(); }, []);
+  const called = useRef(false);
+
+  useEffect(() => {
+    if (!called.current) {
+      called.current = true;
+      fetchMe();
+    }
+  }, []);
+
   return <>{children}</>;
 };
 

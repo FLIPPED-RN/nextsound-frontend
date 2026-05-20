@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -12,7 +12,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = '/login';
+      const isAuthRequest = error.config.url?.includes('/auth/') || error.config.url?.includes('/users/me');
+      if (!isAuthRequest) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
