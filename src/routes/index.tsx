@@ -1,0 +1,36 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { MainLayout } from '../layouts/MainLayout';
+import { DiscoverPage } from '../pages/DiscoverPage';
+import { TrackPage } from '../pages/TrackPage';
+import { UploadPage } from '../pages/UploadPage';
+import { PlaylistsPage } from '../pages/PlaylistsPage';
+import { ArtistPage } from '../pages/ArtistPage';
+import { SearchPage } from '../pages/SearchPage';
+import { LikedPage } from '../pages/LikedPage';
+import { LoginPage } from '../pages/LoginPage';
+import { RegisterPage } from '../pages/RegisterPage';
+import { useAuthStore } from '../store/auth.store';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) return <div className="h-screen bg-black flex items-center justify-center"><div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>;
+  if (!user) return <Navigate to="/login" />;
+  return <>{children}</>;
+};
+
+export const AppRouter = () => (
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/register" element={<RegisterPage />} />
+    <Route path="/" element={<MainLayout />}>
+      <Route index element={<DiscoverPage />} />
+      <Route path="discover" element={<DiscoverPage />} />
+      <Route path="track/:id" element={<TrackPage />} />
+      <Route path="artist/:id" element={<ArtistPage />} />
+      <Route path="search" element={<SearchPage />} />
+      <Route path="upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
+      <Route path="playlists" element={<ProtectedRoute><PlaylistsPage /></ProtectedRoute>} />
+      <Route path="liked" element={<ProtectedRoute><LikedPage /></ProtectedRoute>} />
+    </Route>
+  </Routes>
+);

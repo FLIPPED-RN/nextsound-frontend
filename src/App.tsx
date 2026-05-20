@@ -1,17 +1,9 @@
-import './App.css'
-import { ModeToggle } from './components/mode-toggle'
+// src/App.tsx
+import { Providers } from './providers';
+import { AppRouter } from './routes';
 
-function App() {
-  return (
-    <div>
-      <div>
-        <img src="/src/assets/NextSound Logo.png" alt="" className='w-50'/>
-      </div>
-      <div>
-        <ModeToggle />
-      </div>
-    </div>
-  )
-}
-
-export default App
+export const App = () => (
+  <Providers>
+    <AppRouter />
+  </Providers>
+);

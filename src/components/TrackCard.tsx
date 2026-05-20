@@ -1,0 +1,43 @@
+
+import { useNavigate } from 'react-router-dom';
+import { Play } from 'lucide-react';
+import { usePlayerStore } from '../store/player.store';
+import type { Track } from '@/types';
+
+export const TrackCard = ({ track }: { track: Track }) => {
+  const navigate = useNavigate();
+  const { setTrack, queue } = usePlayerStore();
+
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTrack(track, queue);
+  };
+
+  return (
+    <div
+      onClick={() => navigate(`/track/${track.id}`)}
+      className="group bg-[#151515] rounded-2xl p-3 hover:bg-[#1f1f1f] transition cursor-pointer space-y-3"
+    >
+      <div className="relative">
+        <img
+          src={track.cover_path || '/default-cover.png'}
+          alt={track.title}
+          className="w-full aspect-square object-cover rounded-xl"
+        />
+        <button
+          onClick={handlePlay}
+          className="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 shadow-xl"
+        >
+          <Play size={18} className="ml-0.5" />
+        </button>
+      </div>
+      <div>
+        <p className="font-semibold truncate">{track.title}</p>
+        <p className="text-sm text-[#888888] truncate">
+          {track.user?.nickname || track.user?.firstName}
+        </p>
+        <p className="text-xs text-[#888888] mt-1">{track.plays_count} plays</p>
+      </div>
+    </div>
+  );
+};
