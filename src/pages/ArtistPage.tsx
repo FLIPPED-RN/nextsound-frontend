@@ -14,16 +14,22 @@ export const ArtistPage = () => {
   });
   const { data: tracks } = useQuery({
     queryKey: ['artistTracks', userId],
-    queryFn: () => tracksApi.getMy(userId).then((r) => r.data),
+    queryFn: () => tracksApi.getByUser(userId).then((r) => r.data),
   });
   const { setTrack, queue } = usePlayerStore();
+
+  const getUrl = (path?: string) => {
+    if (!path) return '/default-cover.png';
+    if (path.startsWith('http')) return path;
+    return `/${path.replace(/\\/g, '/')}`;
+  };
 
   if (!artist) return null;
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        <div className="w-48 h-48 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-5xl font-bold">
+        <div className="w-48 h-48 rounded-full bg-linear-to-br from-purple-500 to-blue-500 flex items-center justify-center text-5xl font-bold">
           {artist.firstName[0]}
         </div>
         <div className="space-y-2">
@@ -42,7 +48,11 @@ export const ArtistPage = () => {
             >
               <span className="w-8 text-center text-[#888888] group-hover:hidden">{i + 1}</span>
               <Play size={16} className="hidden group-hover:block" />
-              <img src={t.cover_path || '/default-cover.png'} alt="" className="w-10 h-10 rounded object-cover" />
+              <img
+                src={getUrl(t.cover_path)}
+                alt={t.title}
+                className="w-16 h-16 rounded-2xl object-cover shadow-2xl"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{t.title}</p>
               </div>

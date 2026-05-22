@@ -17,7 +17,7 @@ export const Player = () => {
     if (currentTrack && user) {
       tracksApi.getLikes(currentTrack.id).then((res) => {
         setLiked(res.data.count > 0);
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [currentTrack, user]);
 
@@ -34,6 +34,13 @@ export const Player = () => {
     setLiked(!liked);
   };
 
+  const getCoverUrl = (path?: string) => {
+    if (!path) return '/default-cover.png';
+    const cleanPath = path.replace(/\\/g, '/');
+    if (cleanPath.startsWith('http')) return cleanPath;
+    return `/${cleanPath}`;
+  };
+
   if (!currentTrack) return null;
 
   return (
@@ -41,9 +48,9 @@ export const Player = () => {
       {/* Track Info */}
       <div className="flex items-center gap-3 w-1/4 min-w-0">
         <img
-          src={currentTrack.cover_path || '/default-cover.png'}
+          src={getCoverUrl(currentTrack.cover_path)}
           alt=""
-          className="w-12 h-12 rounded-lg object-cover shrink-0"
+          className="w-16 h-16 rounded-lg object-cover shrink-0"
         />
         <div className="min-w-0">
           <p className="text-sm font-medium truncate">{currentTrack.title}</p>

@@ -8,7 +8,7 @@ const links = [
   { to: '/search', icon: Search, label: 'Поиск' },
   { to: '/upload', icon: Upload, label: 'Загрузить' },
   { to: '/playlists', icon: ListMusic, label: 'Плейлисты' },
-  { to: '/liked', icon: Heart, label: 'Либимое' },
+  { to: '/liked', icon: Heart, label: 'Любимое' },
 ];
 
 export const Sidebar = () => {
@@ -17,8 +17,12 @@ export const Sidebar = () => {
 
   return (
     <div className="flex flex-col h-full bg-[#111111] border-r border-[#242424] px-4 py-6">
-      {/* Logo */}
-      <h1 className="text-2xl font-bold mb-8 px-2">NextSound</h1>
+      <div>
+        
+        <img src="" alt="" />
+        <h1 className="text-2xl font-bold mb-8 px-2">NextSound</h1>
+
+      </div>
 
       {/* Nav Links */}
       <nav className="flex-1 space-y-1">

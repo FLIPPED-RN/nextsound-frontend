@@ -16,13 +16,15 @@ interface PlayerState {
   setVolume: (vol: number) => void;
   setProgress: (prog: number) => void;
   setDuration: (dur: number) => void;
-  seekTo: (time: number) => void;  // новый метод
+  seekTo: (time: number) => void;
 }
 
 const getAudioUrl = (path?: string) => {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
-  return `/${path.replace(/\\/g, '/')}`;
+  const cleanPath = path.replace(/\\/g, '/');
+  if (cleanPath.startsWith('http')) return cleanPath;
+  if (cleanPath.startsWith('uploads/')) return `/${cleanPath}`;
+  return `/${cleanPath}`;
 };
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -34,17 +36,29 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   duration: 0,
   audio: null,
   setTrack: (track, queue = []) => {
+    console.log('Track:', track);
+    console.log('File path:', track.file_path);
+    
+    const url = getAudioUrl(track.file_path);
+    console.log('Final URL:', url);
+    
+    if (!url) {
+      console.error('Empty audio URL');
+      return;
+    }
+    
     const currentAudio = get().audio;
     if (currentAudio) {
       currentAudio.pause();
       currentAudio.src = '';
     }
-    const audio = new Audio(getAudioUrl(track.file_path));
+    
+    const audio = new Audio(url);
     audio.volume = get().volume;
     audio.onloadedmetadata = () => set({ duration: audio.duration });
     audio.ontimeupdate = () => set({ progress: audio.currentTime });
     audio.onended = () => get().nextTrack();
-    audio.onerror = (e) => console.error('Audio error:', e);
+    audio.onerror = (e) => console.error('Audio error:', e, url);
     audio.play().catch(err => console.error('Play error:', err));
     set({ currentTrack: track, queue, isPlaying: true, audio });
   },

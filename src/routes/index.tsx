@@ -3,13 +3,13 @@ import { MainLayout } from '../layouts/MainLayout';
 import { DiscoverPage } from '../pages/DiscoverPage';
 import { TrackPage } from '../pages/TrackPage';
 import { UploadPage } from '../pages/UploadPage';
-import { PlaylistsPage } from '../pages/PlaylistsPage';
 import { ArtistPage } from '../pages/ArtistPage';
 import { SearchPage } from '../pages/SearchPage';
 import { LikedPage } from '../pages/LikedPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { useAuthStore } from '../store/auth.store';
+import { PlaylistPage } from '@/pages/PlaylistPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuthStore();
@@ -29,8 +29,11 @@ export const AppRouter = () => (
       <Route path="artist/:id" element={<ArtistPage />} />
       <Route path="search" element={<SearchPage />} />
       <Route path="upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
-      <Route path="playlists" element={<ProtectedRoute><PlaylistsPage /></ProtectedRoute>} />
       <Route path="liked" element={<ProtectedRoute><LikedPage /></ProtectedRoute>} />
+      {/* <Route path="playlists" element={<ProtectedRoute><PlaylistPage /></ProtectedRoute>} /> */}
+      {/* <Route path="playlists/:id" element={<ProtectedRoute><PlaylistPage /></ProtectedRoute>} /> */}
+      <Route path="playlists" element={<PlaylistPage />} />
+      <Route path="playlists/:id" element={<PlaylistPage />} />
     </Route>
   </Routes>
 );

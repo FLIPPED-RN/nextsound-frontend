@@ -84,15 +84,15 @@ export const TrackPage = () => {
           <div className="flex gap-3">
             <button
               onClick={handlePlay}
-              className="bg-white text-black px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 hover:opacity-90 transition"
+              className="bg-white text-black px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 hover:opacity-90 transition cursor-pointer"
             >
               {isThisTrackPlaying ? <Pause size={18} /> : <Play size={18} />}
               {isThisTrackPlaying ? 'Pause' : 'Play'}
             </button>
-            <button onClick={handleLike} className="p-2.5 border border-[#242424] rounded-full hover:border-white transition">
+            <button onClick={handleLike} className="p-2.5 border border-[#242424] rounded-full hover:border-white transition  cursor-pointer">
               <Heart size={18} className={liked ? 'fill-red-500 text-red-500' : ''} />
             </button>
-            <button className="p-2.5 border border-[#242424] rounded-full hover:border-white transition">
+            <button className="p-2.5 border border-[#242424] rounded-full hover:border-white transition cursor-pointer">
               <Share2 size={18} />
             </button>
           </div>
@@ -123,7 +123,7 @@ export const TrackPage = () => {
               placeholder="Напишите коментарий..."
               className="flex-1 px-4 py-2 bg-[#151515] rounded-xl text-white outline-none"
             />
-            <button type="submit" className="bg-white text-black px-4 py-2 rounded-full font-semibold">
+            <button type="submit" className="bg-white text-black px-4 py-2 rounded-full font-semibold cursor-pointer">
               Отправить
             </button>
           </form>

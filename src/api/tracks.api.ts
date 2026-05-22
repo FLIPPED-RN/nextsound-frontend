@@ -17,4 +17,5 @@ export const tracksApi = {
   toggleLike: (id: number) => apiClient.post<{ liked: boolean }>(`/tracks/${id}/like`),
   getLikes: (id: number) => apiClient.get<{ count: number }>(`/tracks/${id}/likes`),
   getLiked: () => apiClient.get<{ track: Track }[]>('/tracks/liked'),
+  getByUser: (userId: number) => apiClient.get<Track[]>(`/tracks/user/${userId}`),
 };

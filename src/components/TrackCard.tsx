@@ -26,9 +26,9 @@ export const TrackCard = ({ track }: { track: Track }) => {
         />
         <button
           onClick={handlePlay}
-          className="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 shadow-xl"
+          className="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 shadow-xl cursor-pointer"
         >
-          <Play size={18} className="ml-0.5" />
+          <Play size={18} className="ml-0.5 cursor-pointer" />
         </button>
       </div>
       <div>
@@ -36,7 +36,7 @@ export const TrackCard = ({ track }: { track: Track }) => {
         <p className="text-sm text-[#888888] truncate">
           {track.user?.nickname || track.user?.firstName}
         </p>
-        <p className="text-xs text-[#888888] mt-1">{track.plays_count} plays</p>
+        <p className="text-xs text-[#888888] mt-1">{track.plays_count} прослушиваний</p>
       </div>
     </div>
   );
