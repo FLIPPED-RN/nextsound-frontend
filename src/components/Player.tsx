@@ -66,14 +66,14 @@ export const Player = () => {
       {/* Controls */}
       <div className="flex-1 flex flex-col items-center gap-1">
         <div className="flex items-center gap-4">
-          <button onClick={prevTrack}><SkipBack size={20} /></button>
+          <button onClick={prevTrack} className='cursor-pointer'><SkipBack size={20} /></button>
           <button
             onClick={togglePlay}
-            className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-black"
+            className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-black cursor-pointer"
           >
             {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
           </button>
-          <button onClick={nextTrack}><SkipForward size={20} /></button>
+          <button onClick={nextTrack} className='cursor-pointer'><SkipForward size={20} /></button>
         </div>
         <div
           ref={progressRef}
@@ -81,7 +81,7 @@ export const Player = () => {
           className="w-full max-w-xl h-1 bg-[#242424] rounded-full cursor-pointer group"
         >
           <div
-            className="h-full bg-white rounded-full group-hover:bg-green-500 transition"
+            className="h-full bg-white rounded-full group-hover:bg-amber-300 transition"
             style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }}
           />
         </div>
@@ -101,7 +101,7 @@ export const Player = () => {
           step={0.05}
           value={volume}
           onChange={(e) => setVolume(+e.target.value)}
-          className="w-24 h-1 accent-white"
+          className="w-24 h-1 accent-white cursor-pointer"
         />
       </div>
     </div>
