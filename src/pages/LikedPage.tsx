@@ -14,7 +14,7 @@ export const LikedPage = () => {
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center gap-3">
         <Heart size={28} className="fill-red-500 text-red-500" />
-        <h2 className="text-3xl font-bold">Liked Tracks</h2>
+        <h2 className="text-3xl font-bold">Понравившиеся треки</h2>
       </div>
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">

@@ -16,12 +16,10 @@ export const Sidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col h-full bg-[#111111] border-r border-[#242424] px-4 py-6">
-      <div>
-        
-        <img src="" alt="" />
-        <h1 className="text-2xl font-bold mb-8 px-2">NextSound</h1>
-
+    <div className="flex flex-col h-full bg-[#111111] border-r border-[#242424] px-4 py-5">
+      <div className='flex items-center mb-10'>
+        <img src="/NextSoundLogo.png" alt="" className='w-12 h-12' />
+        <h1 className="text-2xl font-bold px-2">NextSound</h1>
       </div>
 
       {/* Nav Links */}
@@ -31,7 +29,7 @@ export const Sidebar = () => {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-full text-sm transition-all duration-200 ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                 isActive ? 'bg-white text-black font-semibold' : 'text-[#888888] hover:text-white'
               }`
             }
@@ -58,7 +56,7 @@ export const Sidebar = () => {
             onClick={logout}
             className="mt-2 text-xs text-[#888888] hover:text-white px-3 transition"
           >
-            Logout
+            Выйти
           </button>
         </div>
       )}

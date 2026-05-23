@@ -47,7 +47,7 @@ export const ArtistPage = () => {
               onClick={() => setTrack(t, tracks)}
             >
               <span className="w-8 text-center text-[#888888] group-hover:hidden">{i + 1}</span>
-              <Play size={16} className="hidden group-hover:block" />
+              <Play size={16} className="hidden group-hover:block ml-3" />
               <img
                 src={getUrl(t.cover_path)}
                 alt={t.title}
@@ -56,7 +56,7 @@ export const ArtistPage = () => {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{t.title}</p>
               </div>
-              <span className="text-sm text-[#888888]">{t.plays_count} plays</span>
+              <span className="text-sm text-[#888888]">{t.plays_count} прослушиваний</span>
             </div>
           ))}
         </div>

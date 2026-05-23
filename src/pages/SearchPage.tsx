@@ -23,7 +23,7 @@ export const SearchPage = () => {
           className="w-full pl-12 pr-4 py-3 bg-[#151515] rounded-full text-white outline-none"
         />
       </div>
-      {isLoading && <p className="text-[#888888]">Searching...</p>}
+      {isLoading && <p className="text-[#888888]">Поиск...</p>}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {data?.map((t) => <TrackCard key={t.id} track={t} />)}
       </div>

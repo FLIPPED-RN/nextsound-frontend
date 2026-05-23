@@ -10,12 +10,16 @@ export const MainLayout = () => {
   return (
     <div className="flex h-screen bg-black text-white">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 z-30">
+      <aside
+        className={`hidden md:flex w-64 flex-col fixed inset-y-0 z-30 ${
+          currentTrack ? 'pb-20' : 'pb-0'
+        }`}
+      >
         <Sidebar />
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:pl-64 overflow-y-auto pb-32">
+      <main className={`flex-1 md:pl-64 overflow-y-auto ${currentTrack ? 'pb-32' : 'pb-0'}`}>
         <Outlet />
       </main>
 
