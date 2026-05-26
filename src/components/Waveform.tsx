@@ -1,4 +1,3 @@
-// src/components/Waveform.tsx
 import { useEffect, useRef } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 

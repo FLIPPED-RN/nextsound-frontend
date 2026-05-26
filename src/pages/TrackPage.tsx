@@ -87,7 +87,7 @@ export const TrackPage = () => {
               className="bg-white text-black px-6 py-2.5 rounded-full font-semibold flex items-center gap-2 hover:opacity-90 transition cursor-pointer"
             >
               {isThisTrackPlaying ? <Pause size={18} /> : <Play size={18} />}
-              {isThisTrackPlaying ? 'Pause' : 'Play'}
+              {isThisTrackPlaying ? 'Пауза' : 'Слушать'}
             </button>
             <button onClick={handleLike} className="p-2.5 border border-[#242424] rounded-full hover:border-white transition  cursor-pointer">
               <Heart size={18} className={liked ? 'fill-red-500 text-red-500' : ''} />
