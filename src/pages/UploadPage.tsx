@@ -1,28 +1,32 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Music, Image, X, Play, Pause } from 'lucide-react';
+import { UploadCloud, Music, ImageIcon, X, Check, Lock, Globe, Link2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
+import { useAuthStore } from '../store/auth.store';
+
+type Visibility = 'public' | 'private' | 'link';
 
 export const UploadPage = () => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [genre, setGenre] = useState('');
-  const [visibility, setVisibility] = useState<'public' | 'private' | 'link'>('public');
+  const [bpm, setBpm] = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState<Visibility>('public');
+  const [publishNow, setPublishNow] = useState(true);
+  const [releaseDate, setReleaseDate] = useState('');
+
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const [audioPreview, setAudioPreview] = useState<string | null>(null);
-  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const navigate = useNavigate();
 
   const onDropAudio = useCallback((files: File[]) => {
-    const file = files[0];
-    setAudioFile(file);
-    const url = URL.createObjectURL(file);
-    setAudioPreview(url);
+    if (files[0]) setAudioFile(files[0]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -31,48 +35,27 @@ export const UploadPage = () => {
     maxFiles: 1,
   });
 
+  useEffect(() => () => { if (coverPreview) URL.revokeObjectURL(coverPreview); }, [coverPreview]);
+
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setCoverFile(file);
-    if (file) {
-      setCoverPreview(URL.createObjectURL(file));
-    } else {
-      setCoverPreview(null);
-    }
-  };
-
-  const handleRemoveAudio = () => {
-    setAudioFile(null);
-    if (audioPreview) URL.revokeObjectURL(audioPreview);
-    setAudioPreview(null);
-    setIsPreviewPlaying(false);
-  };
-
-  const handleRemoveCover = () => {
-    setCoverFile(null);
     if (coverPreview) URL.revokeObjectURL(coverPreview);
-    setCoverPreview(null);
-  };
-
-  const handlePreviewToggle = (audioEl: HTMLAudioElement | null) => {
-    if (!audioEl) return;
-    if (isPreviewPlaying) {
-      audioEl.pause();
-    } else {
-      audioEl.play();
-    }
-    setIsPreviewPlaying(!isPreviewPlaying);
+    setCoverPreview(file ? URL.createObjectURL(file) : null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!audioFile || !title) return;
+    if (!audioFile) { toast.error('Добавьте аудиофайл'); return; }
+    if (!title.trim()) { toast.error('Введите название трека'); return; }
     setUploading(true);
     const form = new FormData();
-    form.append('title', title);
+    form.append('title', title.trim());
     form.append('description', description);
     form.append('genre', genre);
+    if (bpm) form.append('bpm', bpm);
     form.append('visibility', visibility);
+    if (!publishNow && releaseDate) form.append('release_date', releaseDate);
     form.append('file', audioFile);
     if (coverFile) form.append('cover', coverFile);
     try {
@@ -81,150 +64,161 @@ export const UploadPage = () => {
       navigate(`/track/${res.data.id}`);
     } catch (err) {
       console.error(err);
-      toast.error('Ошибка загрузки :(');
+      toast.error('Ошибка загрузки');
     } finally {
       setUploading(false);
     }
   };
 
+  const visOptions: { v: Visibility; label: string; desc: string; icon: React.ReactNode }[] = [
+    { v: 'public', label: 'Публичный', desc: 'Виден всем', icon: <Globe size={16} /> },
+    { v: 'private', label: 'Приватный', desc: 'Только вы', icon: <Lock size={16} /> },
+    { v: 'link', label: 'Ссылка', desc: 'По прямой ссылке', icon: <Link2 size={16} /> },
+  ];
+
   return (
-    <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
-      <h2 className="text-3xl font-bold">Загрузить трек</h2>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition ${
-            isDragActive ? 'border-white bg-[#1a1a1a]' : 'border-[#242424] hover:border-[#444]'
-          }`}
-        >
-          <input {...getInputProps()} />
-          {audioFile ? (
-            <div className="flex flex-col items-center gap-3">
-              <Music size={40} className="text-green-400" />
-              <span className="font-medium">{audioFile.name}</span>
-              <span className="text-xs text-[#888888]">
-                {(audioFile.size / (1024 * 1024)).toFixed(1)} MB
-              </span>
-              <div className="flex gap-3">
-                {audioPreview && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const audio = document.getElementById('audio-preview') as HTMLAudioElement;
-                      handlePreviewToggle(audio);
-                    }}
-                    className="px-4 py-2 bg-white text-black rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-80 transition"
-                  >
-                    {isPreviewPlaying ? <Pause size={16} /> : <Play size={16} />}
-                    {isPreviewPlaying ? 'Stop' : 'Preview'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveAudio();
-                  }}
-                  className="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-80 transition"
-                >
-                  <X size={16} />
-                  Удалить
-                </button>
-              </div>
-              {audioPreview && <audio id="audio-preview" src={audioPreview} className="hidden" onEnded={() => setIsPreviewPlaying(false)} />}
+    <form onSubmit={handleSubmit} className="px-4 md:px-8 py-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div>
+          <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Artist Dashboard</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">ЗАГРУЗИТЬ ТРЕК</h1>
+        </div>
+        <span className="text-xs text-[#888] bg-[#151515] px-3 py-1.5 rounded-full">Поддерживаются: MP3, WAV, FLAC</span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        {/* Left */}
+        <div className="space-y-5">
+          {/* Dropzone */}
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-2xl p-10 md:p-14 text-center cursor-pointer transition ${isDragActive ? 'border-white bg-white/5' : 'border-[#2a2a2a] hover:border-[#444] bg-[#0e0e0e]'}`}
+          >
+            <input {...getInputProps()} />
+            <UploadCloud size={40} className="mx-auto text-[#888]" />
+            <p className="mt-3 font-medium">Перетащите файл сюда</p>
+            <p className="text-sm text-[#888]">или <span className="text-white underline">загрузите</span> с вашего компьютера</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-5 text-xs text-[#666]">
+              <span className="bg-[#151515] px-2.5 py-1 rounded-full">MP3</span>
+              <span className="bg-[#151515] px-2.5 py-1 rounded-full">WAV</span>
+              <span className="bg-[#151515] px-2.5 py-1 rounded-full">FLAC</span>
+              <span className="bg-[#151515] px-2.5 py-1 rounded-full">Max 100MB</span>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <Upload size={32} className="mx-auto" />
-              <p>Drag & drop audio file or click to select</p>
-              <p className="text-xs text-[#888888]">MP3, WAV, FLAC up to 100MB</p>
+          </div>
+
+          {/* File row */}
+          {audioFile && (
+            <div className="flex items-center gap-3 bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-3">
+              <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
+                <Music size={18} className="text-violet-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{audioFile.name}</p>
+                <div className="h-1.5 bg-[#222] rounded-full mt-2 overflow-hidden">
+                  <div className="h-full bg-green-500 rounded-full w-full" />
+                </div>
+              </div>
+              <span className="text-xs text-[#888] shrink-0">{(audioFile.size / (1024 * 1024)).toFixed(1)} MB</span>
+              <span className="inline-flex items-center gap-1 text-xs text-green-400 shrink-0"><Check size={14} /> Готово</span>
+              <button type="button" onClick={() => setAudioFile(null)} className="text-[#666] hover:text-white shrink-0"><X size={16} /></button>
             </div>
           )}
+
+          {/* Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Название трека">
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Midnight Echoes" className="ns-input" />
+            </Field>
+            <Field label="Артист">
+              <input value={user?.nickname || user?.firstName || ''} readOnly className="ns-input opacity-70 cursor-not-allowed" />
+            </Field>
+            <Field label="Жанр">
+              <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Electronic" className="ns-input" />
+            </Field>
+            <Field label="BPM">
+              <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 128" className="ns-input" />
+            </Field>
+          </div>
+          <Field label="Описание">
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Расскажите о треке..." className="ns-input resize-none h-24" />
+          </Field>
         </div>
 
-        {/* Обложка */}
-        <div>
-          <p className="text-sm text-[#888888] mb-2">Обложка трека</p>
-          <div className="flex items-start gap-4">
-            {coverPreview ? (
-              <div className="relative w-32 h-32">
-                <img src={coverPreview} alt="Cover" className="w-full h-full object-cover rounded-xl" />
+        {/* Right */}
+        <div className="space-y-6">
+          {/* Cover */}
+          <div>
+            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Cover Art</p>
+            <label className="relative block aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-[#2a2a2a] hover:border-[#444] cursor-pointer group bg-[#0e0e0e]">
+              {coverPreview ? (
+                <>
+                  <img src={coverPreview} alt="cover" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-sm font-medium">
+                    <ImageIcon size={16} className="mr-2" /> Change Cover
+                  </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-[#888]">
+                  <ImageIcon size={28} />
+                  <span className="text-sm mt-2">Change Cover</span>
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
+            </label>
+            <p className="text-xs text-[#666] mt-2">JPG, PNG или WEBP. Min 800×800</p>
+          </div>
+
+          {/* Visibility */}
+          <div>
+            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Доступ</p>
+            <div className="space-y-2">
+              {visOptions.map((o) => (
                 <button
                   type="button"
-                  onClick={handleRemoveCover}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center hover:opacity-80 transition"
+                  key={o.v}
+                  onClick={() => setVisibility(o.v)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition ${visibility === o.v ? 'border-white bg-white/5' : 'border-[#1f1f1f] hover:border-[#333]'}`}
                 >
-                  <X size={12} />
+                  <span className="text-[#aaa]">{o.icon}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium">{o.label}</span>
+                    <span className="block text-xs text-[#666]">{o.desc}</span>
+                  </span>
+                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${visibility === o.v ? 'border-white' : 'border-[#444]'}`}>
+                    {visibility === o.v && <span className="w-2 h-2 rounded-full bg-white" />}
+                  </span>
                 </button>
-              </div>
-            ) : (
-              <label className="w-32 h-32 border-2 border-dashed border-[#242424] rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#444] transition">
-                <Image size={24} className="text-[#888888]" />
-                <span className="text-xs text-[#888888] mt-1">Обложка</span>
-                <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
-              </label>
-            )}
-            {!coverPreview && (
-              <label className="px-4 py-2 bg-[#151515] rounded-xl cursor-pointer hover:bg-[#242424] transition text-sm">
-                Выберите изображение
-                <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
-              </label>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Поля */}
-        <input
-          type="text"
-          placeholder="Название"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-4 py-3 bg-[#151515] rounded-xl text-white outline-none"
-          required
-        />
-        <textarea
-          placeholder="Описание"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-4 py-3 bg-[#151515] rounded-xl text-white outline-none resize-none h-24"
-        />
-        <input
-          type="text"
-          placeholder="Жанр"
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-          className="w-full px-4 py-3 bg-[#151515] rounded-xl text-white outline-none"
-        />
-
-        {/* Видимость */}
-        <div>
-          <p className="text-sm text-[#888888] mb-2">Доступ</p>
-          <div className="flex gap-2">
-            {(['public', 'private', 'link'] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setVisibility(v)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-                  visibility === v ? 'bg-white text-black' : 'bg-[#151515] text-[#888888] hover:bg-[#242424]'
-                }`}
-              >
-                {v.charAt(0).toUpperCase() + v.slice(1)}
+          {/* Release date */}
+          <div>
+            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Дата релиза</p>
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#1f1f1f]">
+              <span className="text-sm">Опубликовать сейчас</span>
+              <button type="button" onClick={() => setPublishNow((p) => !p)} className={`w-11 h-6 rounded-full p-0.5 transition ${publishNow ? 'bg-white' : 'bg-[#333]'}`}>
+                <span className={`block w-5 h-5 rounded-full transition ${publishNow ? 'bg-black translate-x-5' : 'bg-white translate-x-0'}`} />
               </button>
-            ))}
+            </div>
+            {!publishNow && (
+              <input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} className="ns-input mt-2" />
+            )}
           </div>
-        </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={uploading || !audioFile || !title}
-          className="w-full py-3 bg-white text-black rounded-full font-semibold disabled:opacity-50 transition"
-        >
-          {uploading ? 'Загрука...' : 'Загрузить трек'}
-        </button>
-      </form>
-    </div>
+          <button type="submit" disabled={uploading} className="w-full py-3 rounded-full bg-white text-black font-semibold disabled:opacity-50 hover:opacity-90 transition">
+            {uploading ? 'Загрузка...' : 'Опубликовать трек'}
+          </button>
+        </div>
+      </div>
+    </form>
   );
 };
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <label className="block">
+    <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">{label}</span>
+    {children}
+  </label>
+);

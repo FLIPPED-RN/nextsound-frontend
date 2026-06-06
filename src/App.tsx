@@ -1,4 +1,3 @@
-// src/App.tsx
 import { Providers } from './providers';
 import { AppRouter } from './routes';
 

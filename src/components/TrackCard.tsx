@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { usePlayerStore } from '../store/player.store';
+import { resolveAssetUrl } from '@/lib/utils';
 import type { Track } from '@/types';
 
 export const TrackCard = ({ track }: { track: Track }) => {
@@ -20,9 +21,10 @@ export const TrackCard = ({ track }: { track: Track }) => {
     >
       <div className="relative">
         <img
-          src={track.cover_path || '/default-cover.png'}
+          src={resolveAssetUrl(track.cover_path) || '/default-cover.png'}
           alt={track.title}
-          className="w-full aspect-square object-cover rounded-xl"
+          onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }}
+          className="w-full aspect-square object-cover rounded-xl bg-[#151515]"
         />
         <button
           onClick={handlePlay}

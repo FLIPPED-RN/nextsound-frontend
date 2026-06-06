@@ -1,5 +1,6 @@
 import { usePlayerStore } from '../store/player.store';
 import { tracksApi } from '../api/tracks.api';
+import { resolveAssetUrl } from '../lib/utils';
 
 import {
   Play,
@@ -78,17 +79,7 @@ export const Player = () => {
     setLiked(!liked);
   };
 
-  const getCoverUrl = (path?: string) => {
-    if (!path) return '/default-cover.png';
-
-    const cleanPath = path.replace(/\\/g, '/');
-
-    if (cleanPath.startsWith('http')) {
-      return cleanPath;
-    }
-
-    return `/${cleanPath}`;
-  };
+  const getCoverUrl = (path?: string) => resolveAssetUrl(path) || '/default-cover.png';
 
   if (!currentTrack) return null;
 

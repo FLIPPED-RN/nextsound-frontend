@@ -1,68 +1,246 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { Play, Pause, Plus, Trash2, ListMusic, LayoutGrid, List, ChevronLeft, BarChart3 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { playlistsApi } from '../api/playlists.api';
 import { usePlayerStore } from '../store/player.store';
-import { Play, Trash2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { resolveAssetUrl, formatTotalDuration, formatDate, derivedStat } from '@/lib/utils';
+import type { Playlist, Track } from '@/types';
+
+const extractTracks = (data: any): Track[] =>
+  Array.isArray(data) ? data.map((item: any) => item.track || item).filter(Boolean) : [];
+
+/** Total seconds for a playlist (durations not stored -> deterministic estimate). */
+const estimateDuration = (tracks: Track[]) =>
+  tracks.reduce((s, t) => s + (180 + derivedStat(t.id, 0, 180)), 0);
 
 export const PlaylistPage = () => {
   const { id } = useParams<{ id: string }>();
-  const playlistId = Number(id);
+  return id ? <PlaylistDetail playlistId={Number(id)} /> : <PlaylistsGrid />;
+};
+
+/* ------------------------------- LIST VIEW ------------------------------- */
+
+const PlaylistsGrid = () => {
   const navigate = useNavigate();
-  const { setTrack, queue } = usePlayerStore();
+  const qc = useQueryClient();
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+
+  const { data: playlists, isLoading } = useQuery({
+    queryKey: ['my-playlists'],
+    queryFn: () => playlistsApi.getMy().then((r) => r.data),
+  });
+
+  const handleCreate = async () => {
+    const name = window.prompt('Название плейлиста');
+    if (!name?.trim()) return;
+    try {
+      await playlistsApi.create(name.trim());
+      toast.success('Плейлист создан');
+      qc.invalidateQueries({ queryKey: ['my-playlists'] });
+    } catch {
+      toast.error('Не удалось создать плейлист');
+    }
+  };
+
+  const list = playlists || [];
+  const recent = list.slice(0, 4);
+
+  return (
+    <div className="px-4 md:px-8 py-6">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Your Library</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">YOUR PLAYLISTS</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={handleCreate} className="px-4 py-2 rounded-full bg-white text-black text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition">
+            <Plus size={16} /> New Playlist
+          </button>
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex items-center justify-between border-y border-[#1a1a1a] py-3 mb-6 text-sm">
+        <div className="flex items-center gap-5 text-[#888]">
+          <span><span className="text-white font-semibold">{list.length}</span> Playlists</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setView('grid')} className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${view === 'grid' ? 'bg-white/10 text-white' : 'text-[#666] hover:text-white'}`}><LayoutGrid size={16} /></button>
+          <button onClick={() => setView('list')} className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${view === 'list' ? 'bg-white/10 text-white' : 'text-[#666] hover:text-white'}`}><List size={16} /></button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array(8).fill(0).map((_, i) => <div key={i} className="aspect-square bg-[#151515] rounded-2xl animate-pulse" />)}
+        </div>
+      ) : (
+        <>
+          {recent.length > 0 && (
+            <>
+              <h2 className="text-xs tracking-widest text-[#666] uppercase mb-3">Recently Played</h2>
+              <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8' : 'space-y-2 mb-8'}>
+                {recent.map((p) => <PlaylistCard key={p.id} playlist={p} view={view} onOpen={() => navigate(`/playlists/${p.id}`)} />)}
+              </div>
+            </>
+          )}
+
+          <h2 className="text-xs tracking-widest text-[#666] uppercase mb-3">All Playlists</h2>
+          <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-2'}>
+            {list.map((p) => <PlaylistCard key={p.id} playlist={p} view={view} onOpen={() => navigate(`/playlists/${p.id}`)} />)}
+            <button
+              onClick={handleCreate}
+              className={view === 'grid'
+                ? 'aspect-square rounded-2xl border-2 border-dashed border-[#242424] hover:border-[#444] flex flex-col items-center justify-center text-[#666] hover:text-white transition'
+                : 'w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-[#242424] hover:border-[#444] text-[#666] hover:text-white transition'}
+            >
+              <Plus size={view === 'grid' ? 28 : 20} />
+              <span className="text-sm mt-1">Create Playlist</span>
+            </button>
+          </div>
+
+          {!list.length && (
+            <p className="text-sm text-[#666] mt-6">У вас пока нет плейлистов. Создайте первый!</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+const PlaylistCard = ({ playlist, view, onOpen }: { playlist: Playlist; view: 'grid' | 'list'; onOpen: () => void }) => {
+  const { setTrack } = usePlayerStore();
+  const { data } = useQuery({
+    queryKey: ['playlist-tracks', playlist.id],
+    queryFn: () => playlistsApi.getTracks(playlist.id).then((r) => r.data),
+  });
+  const tracks = extractTracks(data);
+  const cover = tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
+  const meta = `${tracks.length} tracks · ${formatTotalDuration(estimateDuration(tracks))}`;
+
+  const playAll = (e: React.MouseEvent) => { e.stopPropagation(); if (tracks.length) setTrack(tracks[0], tracks); };
+
+  if (view === 'list') {
+    return (
+      <div onClick={onOpen} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition cursor-pointer group">
+        <CoverBox cover={cover} />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold truncate">{playlist.name}</p>
+          <p className="text-xs text-[#666] truncate">{meta}</p>
+        </div>
+        <button onClick={playAll} className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><Play size={15} className="ml-0.5" /></button>
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={onOpen} className="group cursor-pointer">
+      <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#151515]">
+        {cover ? (
+          <img src={cover} alt="" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-violet-600/40 to-blue-600/30 flex items-center justify-center">
+            <ListMusic size={32} className="text-white/40" />
+          </div>
+        )}
+        <button onClick={playAll} className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all shadow-xl">
+          <Play size={18} className="ml-0.5" />
+        </button>
+      </div>
+      <p className="text-sm font-semibold truncate mt-2">{playlist.name}</p>
+      <p className="text-xs text-[#666] truncate">{meta}</p>
+    </div>
+  );
+};
+
+const CoverBox = ({ cover }: { cover: string }) => (
+  <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#151515] shrink-0">
+    {cover ? <img src={cover} alt="" className="w-full h-full object-cover" />
+      : <div className="w-full h-full bg-gradient-to-br from-violet-600/40 to-blue-600/30 flex items-center justify-center"><ListMusic size={16} className="text-white/40" /></div>}
+  </div>
+);
+
+/* ------------------------------ DETAIL VIEW ------------------------------ */
+
+const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { setTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
 
   const { data: playlist } = useQuery({
     queryKey: ['playlist', playlistId],
     queryFn: () => playlistsApi.getOne(playlistId).then((r) => r.data),
   });
-
-  const { data: tracksData, refetch } = useQuery({
+  const { data: tracksData } = useQuery({
     queryKey: ['playlist-tracks', playlistId],
     queryFn: () => playlistsApi.getTracks(playlistId).then((r) => r.data),
   });
 
-  const tracks = Array.isArray(tracksData)
-    ? tracksData.map((item: any) => item.track || item)
-    : [];
+  const tracks = useMemo(() => extractTracks(tracksData), [tracksData]);
 
-  const handleRemoveTrack = async (trackId: number) => {
-    await playlistsApi.removeTrack(playlistId, trackId);
-    toast.success('Track removed');
-    refetch();
+  const handleRemove = async (trackId: number) => {
+    try {
+      await playlistsApi.removeTrack(playlistId, trackId);
+      toast.success('Трек удалён');
+      qc.invalidateQueries({ queryKey: ['playlist-tracks', playlistId] });
+    } catch { toast.error('Не удалось удалить'); }
   };
 
-  if (!playlist) return null;
+  if (!playlist) return <div className="p-8 animate-pulse"><div className="h-8 w-48 bg-[#151515] rounded" /></div>;
+
+  const cover = tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      <button onClick={() => navigate('/playlists')} className="text-[#888888] hover:text-white transition">
-        ← Back
+    <div className="px-4 md:px-8 py-6">
+      <button onClick={() => navigate('/playlists')} className="inline-flex items-center gap-1 text-sm text-[#888] hover:text-white transition mb-5">
+        <ChevronLeft size={16} /> Back
       </button>
-      <h2 className="text-3xl font-bold">{playlist.name}</h2>
+
+      <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end mb-8">
+        <div className="w-44 h-44 rounded-2xl overflow-hidden bg-[#151515] shadow-2xl shrink-0">
+          {cover ? <img src={cover} alt="" className="w-full h-full object-cover" />
+            : <div className="w-full h-full bg-gradient-to-br from-violet-600/40 to-blue-600/30 flex items-center justify-center"><ListMusic size={40} className="text-white/40" /></div>}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs tracking-widest text-[#666] uppercase mb-2">Playlist</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight break-words">{playlist.name}</h1>
+          <p className="text-sm text-[#888] mt-3">{tracks.length} tracks · {formatTotalDuration(estimateDuration(tracks))}</p>
+          {tracks.length > 0 && (
+            <button onClick={() => setTrack(tracks[0], tracks)} className="mt-4 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
+              <Play size={16} /> Play All
+            </button>
+          )}
+        </div>
+      </div>
+
       {tracks.length === 0 ? (
-        <p className="text-[#888888]">No tracks yet</p>
+        <p className="text-sm text-[#666]">В плейлисте пока нет треков.</p>
       ) : (
-        <div className="space-y-2">
-          {tracks.map((t: any, i: number) => (
-            <div key={t.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-[#151515] transition">
-              <span className="w-6 text-center text-[#888888]">{i + 1}</span>
-              <img
-                src={t.cover_path ? `/${t.cover_path.replace(/\\/g, '/')}` : '/default-cover.png'}
-                alt=""
-                className="w-10 h-10 rounded object-cover"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{t.title}</p>
-                <p className="text-sm text-[#888888] truncate">{t.user?.nickname || t.user?.firstName}</p>
+        <div>
+          {tracks.map((t, i) => {
+            const isCurrent = currentTrack?.id === t.id;
+            return (
+              <div key={t.id} className={`group grid grid-cols-[24px_1fr_auto] gap-3 items-center px-3 py-2 rounded-lg transition ${isCurrent ? 'bg-white/5' : 'hover:bg-white/5'}`}>
+                <button onClick={() => (isCurrent ? togglePlay() : setTrack(t, tracks))} className="w-6 flex items-center justify-center text-[#888]">
+                  {isCurrent ? (isPlaying ? <BarChart3 size={15} className="text-white" /> : <Pause size={14} className="text-white" />)
+                    : <><span className="group-hover:hidden text-sm">{i + 1}</span><Play size={14} className="hidden group-hover:block text-white" /></>}
+                </button>
+                <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={() => navigate(`/track/${t.id}`)}>
+                  <img src={resolveAssetUrl(t.cover_path)} alt="" onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515] shrink-0" />
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium truncate ${isCurrent ? 'text-white' : ''}`}>{t.title}</p>
+                    <p className="text-xs text-[#666] truncate">{t.user?.nickname || t.user?.firstName}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs text-[#666] hidden sm:block">{formatDate(t.created_at)}</span>
+                  <button onClick={() => handleRemove(t.id)} className="text-[#666] hover:text-red-400 transition"><Trash2 size={15} /></button>
+                </div>
               </div>
-              <button onClick={() => setTrack(t, tracks)} className="p-2 hover:bg-[#242424] rounded-full">
-                <Play size={16} />
-              </button>
-              <button onClick={() => handleRemoveTrack(t.id)} className="p-2 hover:bg-[#242424] rounded-full text-[#888888] hover:text-red-400">
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

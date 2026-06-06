@@ -1,5 +1,6 @@
 import type { Track } from '@/types';
 import { create } from 'zustand';
+import { resolveAssetUrl } from '@/lib/utils';
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -29,19 +30,7 @@ interface PlayerState {
   setPlayerExpanded: (value: boolean) => void;
 }
 
-const getAudioUrl = (path?: string) => {
-  if (!path) return '';
-
-  const cleanPath = path.replace(/\\/g, '/');
-
-  if (cleanPath.startsWith('http')) return cleanPath;
-
-  if (cleanPath.startsWith('uploads/')) {
-    return `/${cleanPath}`;
-  }
-
-  return `/${cleanPath}`;
-};
+const getAudioUrl = (path?: string) => resolveAssetUrl(path);
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrack: null,
