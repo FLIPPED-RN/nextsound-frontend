@@ -44,7 +44,7 @@ export const DiscoverPage = () => {
               className="w-36 h-36 md:w-44 md:h-44 rounded-2xl object-cover shadow-2xl bg-[#151515] shrink-0"
             />
             <div className="min-w-0">
-              <span className="text-xs tracking-widest text-violet-300 uppercase">Featured</span>
+              <span className="text-xs tracking-widest text-violet-300 uppercase">Рекомендуем</span>
               <h1 className="text-3xl md:text-5xl font-extrabold mt-2 truncate">{featured.title}</h1>
               <p className="text-sm text-[#bbb] mt-2">{featured.user?.nickname || featured.user?.firstName} · {formatCount(featured.plays_count)} прослушиваний</p>
               <button

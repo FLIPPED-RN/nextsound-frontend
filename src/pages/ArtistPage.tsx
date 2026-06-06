@@ -111,7 +111,7 @@ export const ArtistPage = () => {
         <div className="absolute bottom-0 left-0 right-0 px-4 md:px-8 pb-5">
           {isVerified && (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-white/90 bg-black/40 backdrop-blur px-2.5 py-1 rounded-full mb-3">
-              <BadgeCheck size={14} className="text-blue-400" /> Verified Artist
+              <BadgeCheck size={14} className="text-blue-400" /> Проверенный артист
             </span>
           )}
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg">{name}</h1>
@@ -134,11 +134,11 @@ export const ArtistPage = () => {
               onClick={() => setFollowing((f) => !f)}
               className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${following ? 'bg-[#222] text-white border border-[#333]' : 'bg-white text-black hover:opacity-90'}`}
             >
-              {following ? <><Check size={16} /> Following</> : <><UserPlus size={16} /> Follow</>}
+              {following ? <><Check size={16} /> Вы подписаны</> : <><UserPlus size={16} /> Подписаться</>}
             </button>
           )}
           <button onClick={handlePlayAll} className="px-5 py-2 rounded-full text-sm font-semibold border border-[#242424] flex items-center gap-2 hover:border-white/50 transition">
-            <Play size={16} /> Play All
+            <Play size={16} /> Слушать всё
           </button>
           <button className="w-9 h-9 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition">
             <MoreHorizontal size={16} />
@@ -148,19 +148,19 @@ export const ArtistPage = () => {
 
       <div className="px-4 md:px-8 mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Tracks</h2>
+          <h2 className="text-2xl font-bold">Треки</h2>
           <div className="flex items-center gap-1 text-sm">
-            <span className="text-[#666] mr-1">Sort by:</span>
+            <span className="text-[#666] mr-1">Сортировка:</span>
             {(['popular', 'latest', 'oldest'] as Sort[]).map((s) => (
-              <button key={s} onClick={() => setSort(s)} className={`px-2.5 py-1 rounded-full capitalize transition ${sort === s ? 'text-white font-semibold' : 'text-[#666] hover:text-white'}`}>
-                {s}
+              <button key={s} onClick={() => setSort(s)} className={`px-2.5 py-1 rounded-full transition ${sort === s ? 'text-white font-semibold' : 'text-[#666] hover:text-white'}`}>
+                {({ popular: 'Популярные', latest: 'Новые', oldest: 'Старые' } as Record<Sort, string>)[s]}
               </button>
             ))}
           </div>
         </div>
 
         <div className="hidden md:grid grid-cols-[24px_1fr_120px_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
-          <span>#</span><span>Title</span><span className="text-right">Plays</span><span className="text-right">Released</span><span></span>
+          <span>#</span><span>Название</span><span className="text-right">Прослушивания</span><span className="text-right">Дата</span><span></span>
         </div>
 
         <div className="mt-1">
@@ -178,7 +178,7 @@ export const ArtistPage = () => {
         {sorted.length > 8 && (
           <div className="flex justify-center mt-5">
             <button onClick={() => setShowAll((s) => !s)} className="px-5 py-2 rounded-full bg-[#151515] text-sm text-[#aaa] hover:bg-[#1f1f1f] transition">
-              {showAll ? 'Show less' : `Show all ${trackCount} tracks`}
+              {showAll ? 'Свернуть' : `Показать все (${trackCount})`}
             </button>
           </div>
         )}
@@ -186,7 +186,7 @@ export const ArtistPage = () => {
 
       <div className="px-4 md:px-8 mt-10 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 border-t border-[#1a1a1a] pt-8">
         <div>
-          <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">About</h3>
+          <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">Об артисте</h3>
           <p className="text-sm text-[#bdbdbd] leading-relaxed whitespace-pre-line">
             {displayArtist.bio?.trim()
               ? displayArtist.bio
@@ -194,11 +194,11 @@ export const ArtistPage = () => {
           </p>
         </div>
         <div>
-          <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">Stats</h3>
+          <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">Статистика</h3>
           <dl className="space-y-3 text-sm">
-            <StatRow k="Total Plays" v={formatNumber(totalPlays)} />
-            <StatRow k="Tracks" v={String(trackCount)} />
-            <StatRow k="Member Since" v={String(memberSince)} />
+            <StatRow k="Всего прослушиваний" v={formatNumber(totalPlays)} />
+            <StatRow k="Треков" v={String(trackCount)} />
+            <StatRow k="На сайте с" v={String(memberSince)} />
           </dl>
         </div>
       </div>

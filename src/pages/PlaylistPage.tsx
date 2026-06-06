@@ -75,17 +75,17 @@ const PlaylistsGrid = () => {
     <div className="px-4 md:px-8 py-6">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Your Library</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">YOUR PLAYLISTS</h1>
+          <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Ваша библиотека</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">ВАШИ ПЛЕЙЛИСТЫ</h1>
         </div>
         <button onClick={() => setCreating(true)} className="px-4 py-2 rounded-full bg-white text-black text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition">
-          <Plus size={16} /> New Playlist
+          <Plus size={16} /> Новый плейлист
         </button>
       </div>
 
       <div className="flex items-center justify-between border-y border-[#1a1a1a] py-3 mb-6 text-sm">
         <div className="flex items-center gap-5 text-[#888]">
-          <span><span className="text-white font-semibold">{list.length}</span> Playlists</span>
+          <span><span className="text-white font-semibold">{list.length}</span> плейлистов</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => setView('grid')} className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${view === 'grid' ? 'bg-white/10 text-white' : 'text-[#666] hover:text-white'}`}><LayoutGrid size={16} /></button>
@@ -101,14 +101,14 @@ const PlaylistsGrid = () => {
         <>
           {recent.length > 0 && (
             <>
-              <h2 className="text-xs tracking-widest text-[#666] uppercase mb-3">Recently Played</h2>
+              <h2 className="text-xs tracking-widest text-[#666] uppercase mb-3">Недавние</h2>
               <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8' : 'space-y-2 mb-8'}>
                 {recent.map((p) => <PlaylistCard key={p.id} playlist={p} view={view} onOpen={() => navigate(`/playlists/${p.id}`)} />)}
               </div>
             </>
           )}
 
-          <h2 className="text-xs tracking-widest text-[#666] uppercase mb-3">All Playlists</h2>
+          <h2 className="text-xs tracking-widest text-[#666] uppercase mb-3">Все плейлисты</h2>
           <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-2'}>
             {list.map((p) => <PlaylistCard key={p.id} playlist={p} view={view} onOpen={() => navigate(`/playlists/${p.id}`)} />)}
             <button
@@ -118,7 +118,7 @@ const PlaylistsGrid = () => {
                 : 'w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-[#242424] hover:border-[#444] text-[#666] hover:text-white transition'}
             >
               <Plus size={view === 'grid' ? 28 : 20} />
-              <span className="text-sm mt-1">Create Playlist</span>
+              <span className="text-sm mt-1">Создать плейлист</span>
             </button>
           </div>
 
@@ -216,7 +216,7 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
   return (
     <div className="px-4 md:px-8 py-6">
       <button onClick={() => navigate('/playlists')} className="inline-flex items-center gap-1 text-sm text-[#888] hover:text-white transition mb-5">
-        <ChevronLeft size={16} /> Back
+        <ChevronLeft size={16} /> Назад
       </button>
 
       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end mb-8">
@@ -225,12 +225,12 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
             : <div className="w-full h-full bg-gradient-to-br from-violet-600/40 to-blue-600/30 flex items-center justify-center"><ListMusic size={40} className="text-white/40" /></div>}
         </div>
         <div className="min-w-0">
-          <p className="text-xs tracking-widest text-[#666] uppercase mb-2">Playlist</p>
+          <p className="text-xs tracking-widest text-[#666] uppercase mb-2">Плейлист</p>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight break-words">{playlist.name}</h1>
           <p className="text-sm text-[#888] mt-3">{tracks.length} {tracks.length === 1 ? 'трек' : 'треков'}</p>
           {tracks.length > 0 && (
             <button onClick={() => setTrack(tracks[0], tracks)} className="mt-4 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
-              <Play size={16} /> Play All
+              <Play size={16} /> Слушать всё
             </button>
           )}
         </div>

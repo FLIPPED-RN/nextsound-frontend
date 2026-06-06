@@ -80,7 +80,7 @@ export const UploadPage = () => {
     <form onSubmit={handleSubmit} className="px-4 md:px-8 py-6 max-w-5xl mx-auto">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Artist Dashboard</p>
+          <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Панель артиста</p>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">ЗАГРУЗИТЬ ТРЕК</h1>
         </div>
         <span className="text-xs text-[#888] bg-[#151515] px-3 py-1.5 rounded-full">Поддерживаются: MP3, WAV, FLAC</span>
@@ -100,7 +100,7 @@ export const UploadPage = () => {
               <span className="bg-[#151515] px-2.5 py-1 rounded-full">MP3</span>
               <span className="bg-[#151515] px-2.5 py-1 rounded-full">WAV</span>
               <span className="bg-[#151515] px-2.5 py-1 rounded-full">FLAC</span>
-              <span className="bg-[#151515] px-2.5 py-1 rounded-full">Max 100MB</span>
+              <span className="bg-[#151515] px-2.5 py-1 rounded-full">Макс. 100 МБ</span>
             </div>
           </div>
 
@@ -123,16 +123,16 @@ export const UploadPage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Название трека">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Midnight Echoes" className="ns-input" />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, Полночь" className="ns-input" />
             </Field>
             <Field label="Артист">
               <input value={user?.nickname || user?.firstName || ''} readOnly className="ns-input opacity-70 cursor-not-allowed" />
             </Field>
             <Field label="Жанр">
-              <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Electronic" className="ns-input" />
+              <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Например, хип-хоп" className="ns-input" />
             </Field>
-            <Field label="BPM">
-              <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="e.g. 128" className="ns-input" />
+            <Field label="Темп">
+              <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="напр. 128" className="ns-input" />
             </Field>
           </div>
           <Field label="Описание">
@@ -142,24 +142,24 @@ export const UploadPage = () => {
 
         <div className="space-y-6">
           <div>
-            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Cover Art</p>
+            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Обложка</p>
             <label className="relative block aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-[#2a2a2a] hover:border-[#444] cursor-pointer group bg-[#0e0e0e]">
               {coverPreview ? (
                 <>
                   <img src={coverPreview} alt="cover" className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-sm font-medium">
-                    <ImageIcon size={16} className="mr-2" /> Change Cover
+                    <ImageIcon size={16} className="mr-2" /> Изменить обложку
                   </div>
                 </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-[#888]">
                   <ImageIcon size={28} />
-                  <span className="text-sm mt-2">Change Cover</span>
+                  <span className="text-sm mt-2">Изменить обложку</span>
                 </div>
               )}
               <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
             </label>
-            <p className="text-xs text-[#666] mt-2">JPG, PNG или WEBP. Min 800×800</p>
+            <p className="text-xs text-[#666] mt-2">JPG, PNG или WEBP. Мин. 800×800</p>
           </div>
 
           <div>

@@ -27,7 +27,7 @@ export const LikedPage = () => {
           <p className="text-sm text-[#888] mt-3">{tracks.length} треков</p>
           {tracks.length > 0 && (
             <button onClick={() => setTrack(tracks[0], tracks)} className="mt-4 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
-              <Play size={16} /> Play All
+              <Play size={16} /> Слушать всё
             </button>
           )}
         </div>

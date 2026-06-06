@@ -36,7 +36,7 @@ const CommentRow = ({ c, nested }: { c: Comment; nested?: boolean }) => {
           <span className="text-sm font-semibold">{name}</span>
           {isArtist && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-medium">
-              Artist
+              Артист
             </span>
           )}
           <span className="text-xs text-[#666]">{timeAgo(c.created_at)}</span>
@@ -167,11 +167,11 @@ export const TrackPage = () => {
           <button onClick={() => navigate(1)} className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition shrink-0">
             <ChevronRight size={16} />
           </button>
-          <span className="text-sm text-[#8a8a8a] truncate ml-2">{track.genre || 'Music'}</span>
+          <span className="text-sm text-[#8a8a8a] truncate ml-2">{track.genre || 'Музыка'}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={handleShare} className="px-4 py-1.5 rounded-full border border-[#242424] text-sm flex items-center gap-2 hover:border-white/50 transition">
-            <Share2 size={14} /> <span className="hidden sm:inline">Share</span>
+            <Share2 size={14} /> <span className="hidden sm:inline">Поделиться</span>
           </button>
           <button className="w-9 h-9 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition">
             <MoreHorizontal size={16} />
@@ -188,7 +188,7 @@ export const TrackPage = () => {
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] tracking-wider px-2 py-0.5 rounded bg-white/10 text-white/80 uppercase">Single</span>
+            <span className="text-[10px] tracking-wider px-2 py-0.5 rounded bg-white/10 text-white/80 uppercase">Сингл</span>
             {track.genre && (
               <span className="text-[10px] tracking-wider px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 uppercase">{track.genre.split(/[\s,/]+/)[0]}</span>
             )}
@@ -234,7 +234,7 @@ export const TrackPage = () => {
               )}
             </div>
             <button onClick={() => setReposted((r) => !r)} className={`px-5 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition ${reposted ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-[#242424] hover:border-white/50'}`}>
-              <Repeat2 size={16} /> Repost
+              <Repeat2 size={16} /> Репост
             </button>
           </div>
         </div>
@@ -287,9 +287,9 @@ export const TrackPage = () => {
       <div className="mt-10">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-xl font-bold flex items-center gap-2">
-            Comments <span className="text-sm text-[#666] font-normal">{commentsCount}</span>
+            Комментарии <span className="text-sm text-[#666] font-normal">{commentsCount}</span>
           </h3>
-          <span className="text-xs text-[#666]">Sort by: <span className="text-white">Latest</span></span>
+          <span className="text-xs text-[#666]">Сортировка: <span className="text-white">Новые</span></span>
         </div>
 
         <form onSubmit={handleComment} className="flex items-center gap-3 mb-6">
@@ -300,11 +300,11 @@ export const TrackPage = () => {
             <input
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
+              placeholder="Напишите комментарий..."
               className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none"
             />
             <button type="submit" className="px-4 py-1.5 rounded-full bg-white text-black text-sm font-semibold hover:opacity-90 transition">
-              Post
+              Отправить
             </button>
           </div>
         </form>
@@ -317,7 +317,7 @@ export const TrackPage = () => {
         {comments && comments.length > 5 && !showAll && (
           <div className="flex justify-center mt-6">
             <button onClick={() => setShowAll(true)} className="px-5 py-2 rounded-full bg-[#151515] text-sm text-[#aaa] hover:bg-[#1f1f1f] transition">
-              Load more comments
+              Показать ещё
             </button>
           </div>
         )}
