@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import {
   Play, Pause, Heart, Share2, Repeat2, Plus, ChevronLeft, ChevronRight,
-  MoreHorizontal, MessageCircle,
+  MoreHorizontal, MessageCircle, Pencil, Trash2, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
@@ -13,7 +13,7 @@ import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { Waveform } from '../components/Waveform';
 import { resolveAssetUrl, formatCount, formatTime, formatDate, timeAgo } from '@/lib/utils';
-import type { Comment } from '@/types';
+import type { Comment, Track } from '@/types';
 
 const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) => (
   <span className="inline-flex items-center gap-1.5 text-sm text-[#8a8a8a]">
@@ -66,6 +66,7 @@ export const TrackPage = () => {
   });
 
   const { user } = useAuthStore();
+  const qc = useQueryClient();
   const { currentTrack, isPlaying, progress, duration, setTrack, togglePlay, seekTo, queue } = usePlayerStore();
 
   const [commentText, setCommentText] = useState('');
@@ -74,13 +75,18 @@ export const TrackPage = () => {
   const [reposted, setReposted] = useState(false);
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setLikeCount(likeData?.count ?? 0); setLiked((likeData?.count ?? 0) > 0); }, [likeData]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowPlaylists(false);
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) setShowMenu(false);
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -114,6 +120,7 @@ export const TrackPage = () => {
   const artistName = track.user?.nickname || track.user?.firstName || 'Unknown';
   const year = new Date(track.release_date || track.created_at).getFullYear();
   const trackDuration = isActive && duration ? duration : 0;
+  const isOwner = !!user && user.id === track.userId;
 
   const handlePlay = () => {
     if (isThisPlaying) togglePlay();
@@ -142,6 +149,24 @@ export const TrackPage = () => {
     const url = window.location.href;
     try { await navigator.clipboard.writeText(url); toast.success('Ссылка скопирована'); }
     catch { toast.error('Не удалось скопировать'); }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await tracksApi.delete(track.id);
+      toast.success('Трек удалён');
+      qc.invalidateQueries({ queryKey: ['tracks'] });
+      qc.invalidateQueries({ queryKey: ['artistTracks', track.userId] });
+      navigate(`/artist/${track.userId}`);
+    } catch {
+      toast.error('Не удалось удалить трек');
+    }
+  };
+
+  const handleSaved = (updated: Track) => {
+    qc.setQueryData(['track', trackId], updated);
+    qc.invalidateQueries({ queryKey: ['tracks'] });
+    setEditing(false);
   };
 
   const handleComment = async (e: React.FormEvent) => {
@@ -173,9 +198,28 @@ export const TrackPage = () => {
           <button onClick={handleShare} className="px-4 py-1.5 rounded-full border border-[#242424] text-sm flex items-center gap-2 hover:border-white/50 transition">
             <Share2 size={14} /> <span className="hidden sm:inline">Поделиться</span>
           </button>
-          <button className="w-9 h-9 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition">
-            <MoreHorizontal size={16} />
-          </button>
+          <div className="relative" ref={actionsRef}>
+            <button onClick={() => setShowMenu((s) => !s)} className="w-9 h-9 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition">
+              <MoreHorizontal size={16} />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 z-30 mt-2 w-48 rounded-xl bg-[#1a1a1a] border border-[#242424] shadow-2xl p-1">
+                <button onClick={handleShare} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/5 transition flex items-center gap-2">
+                  <Share2 size={15} /> Поделиться
+                </button>
+                {isOwner && (
+                  <>
+                    <button onClick={() => { setShowMenu(false); setEditing(true); }} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/5 transition flex items-center gap-2">
+                      <Pencil size={15} /> Редактировать
+                    </button>
+                    <button onClick={() => { setShowMenu(false); setConfirmDelete(true); }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition flex items-center gap-2">
+                      <Trash2 size={15} /> Удалить
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -322,9 +366,107 @@ export const TrackPage = () => {
           </div>
         )}
       </div>
+
+      {editing && <EditTrackModal track={track} onClose={() => setEditing(false)} onSaved={handleSaved} />}
+      {confirmDelete && (
+        <ConfirmModal
+          title="Удалить трек?"
+          text={`«${track.title}» будет удалён безвозвратно вместе с лайками и комментариями.`}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => { setConfirmDelete(false); handleDelete(); }}
+        />
+      )}
     </div>
   );
 };
+
+const EditTrackModal = ({ track, onClose, onSaved }: { track: Track; onClose: () => void; onSaved: (t: Track) => void }) => {
+  const [form, setForm] = useState({
+    title: track.title || '',
+    description: track.description || '',
+    genre: track.genre || '',
+    bpm: track.bpm ? String(track.bpm) : '',
+    visibility: track.visibility || 'public',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) { toast.error('Введите название'); return; }
+    setSaving(true);
+    try {
+      const res = await tracksApi.update(track.id, {
+        title: form.title.trim(),
+        description: form.description,
+        genre: form.genre,
+        bpm: form.bpm ? Number(form.bpm) : 0,
+        visibility: form.visibility as Track['visibility'],
+      });
+      toast.success('Трек обновлён');
+      onSaved(res.data);
+    } catch {
+      toast.error('Не удалось сохранить');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={save} className="w-full max-w-md bg-[#111] border border-[#242424] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">Редактировать трек</h3>
+          <button type="button" onClick={onClose} className="text-[#666] hover:text-white transition"><X size={18} /></button>
+        </div>
+        <label className="block">
+          <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Название</span>
+          <input className="ns-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Жанр</span>
+            <input className="ns-input" value={form.genre} onChange={(e) => setForm({ ...form, genre: e.target.value })} />
+          </label>
+          <label className="block">
+            <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Темп</span>
+            <input className="ns-input" value={form.bpm} onChange={(e) => setForm({ ...form, bpm: e.target.value.replace(/\D/g, '') })} />
+          </label>
+        </div>
+        <label className="block">
+          <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Доступ</span>
+          <select className="ns-input" value={form.visibility} onChange={(e) => setForm({ ...form, visibility: e.target.value as Track['visibility'] })}>
+            <option value="public">Публичный</option>
+            <option value="private">Приватный</option>
+            <option value="link">По ссылке</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Описание</span>
+          <textarea className="ns-input resize-none h-24" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        </label>
+        <div className="flex justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
+          <button type="submit" disabled={saving} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black hover:opacity-90 transition disabled:opacity-60">
+            {saving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const ConfirmModal = ({ title, text, onCancel, onConfirm }: { title: string; text: string; onCancel: () => void; onConfirm: () => void }) => (
+  <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onCancel}>
+    <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm bg-[#111] border border-[#242424] rounded-2xl p-6 space-y-4">
+      <h3 className="text-lg font-bold">{title}</h3>
+      <p className="text-sm text-[#aaa]">{text}</p>
+      <div className="flex justify-end gap-2">
+        <button onClick={onCancel} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
+        <button onClick={onConfirm} className="px-5 py-2 rounded-full text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition">Удалить</button>
+      </div>
+    </div>
+  </div>
+);
 
 const InfoRow = ({ k, v }: { k: string; v: string }) => (
   <div className="flex items-center justify-between gap-4">
