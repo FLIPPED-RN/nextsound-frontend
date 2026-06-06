@@ -1,19 +1,25 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { Play, Pause, Heart, BadgeCheck, MoreHorizontal, UserPlus, Check, BarChart3, AtSign, Send, Globe } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { Play, Pause, Heart, BadgeCheck, MoreHorizontal, UserPlus, Check, BarChart3, Camera, Pencil, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { usersApi } from '../api/users.api';
 import { tracksApi } from '../api/tracks.api';
 import { usePlayerStore } from '../store/player.store';
-import { resolveAssetUrl, formatCount, formatNumber, formatDate, derivedStat } from '@/lib/utils';
-import type { Track } from '@/types';
+import { useAuthStore } from '../store/auth.store';
+import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
+import type { Track, User } from '@/types';
 
 type Sort = 'popular' | 'latest' | 'oldest';
 
 export const ArtistPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const userId = Number(id);
+
+  const { user: me, uploadAvatar } = useAuthStore();
+  const isOwn = me?.id === userId;
 
   const { data: artist } = useQuery({
     queryKey: ['artist', userId],
@@ -28,6 +34,9 @@ export const ArtistPage = () => {
   const [sort, setSort] = useState<Sort>('popular');
   const [following, setFollowing] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
 
   const sorted = useMemo(() => {
     const list = [...(tracks || [])];
@@ -37,7 +46,9 @@ export const ArtistPage = () => {
     return list;
   }, [tracks, sort]);
 
-  if (!artist) {
+  const displayArtist = isOwn && me ? { ...artist, ...me } as User : artist;
+
+  if (!displayArtist) {
     return (
       <div className="animate-pulse">
         <div className="h-64 md:h-80 bg-[#151515]" />
@@ -46,23 +57,36 @@ export const ArtistPage = () => {
     );
   }
 
-  const name = artist.nickname || `${artist.firstName} ${artist.lastName}`;
+  const name = displayArtist.nickname || `${displayArtist.firstName} ${displayArtist.lastName}`;
   const totalPlays = (tracks || []).reduce((s, t) => s + (t.plays_count || 0), 0);
   const trackCount = tracks?.length || 0;
-  const isVerified = artist.role === 'artist' || artist.role === 'admin';
-  const banner = tracks?.[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
-  const followers = derivedStat(artist.id + 1, 1000, 200000);
-  const monthlyListeners = derivedStat(artist.id + 2, 5000, 120000);
-  const followingCount = derivedStat(artist.id + 3, 20, 500);
-  const memberSince = new Date(artist.created_at).getFullYear() || 2024;
+  const isVerified = displayArtist.role === 'artist' || displayArtist.role === 'admin';
+  const banner = displayArtist.avatar
+    ? resolveAssetUrl(displayArtist.avatar)
+    : (tracks?.[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '');
+  const memberSince = new Date(displayArtist.created_at).getFullYear() || new Date().getFullYear();
 
   const handlePlayAll = () => { if (sorted.length) setTrack(sorted[0], sorted); };
+
+  const handleAvatarPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      await uploadAvatar(file);
+      qc.invalidateQueries({ queryKey: ['artist', userId] });
+      toast.success('Фото обновлено');
+    } catch {
+      toast.error('Не удалось загрузить фото');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const visible = showAll ? sorted : sorted.slice(0, 8);
 
   return (
     <div className="pb-8">
-      {/* Banner */}
       <div className="relative h-64 md:h-80">
         {banner ? (
           <img src={banner} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -70,6 +94,20 @@ export const ArtistPage = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-violet-700/40 via-blue-700/30 to-black" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
+
+        {isOwn && (
+          <>
+            <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={handleAvatarPick} />
+            <button
+              onClick={() => avatarInput.current?.click()}
+              disabled={uploadingAvatar}
+              className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 text-sm bg-black/50 backdrop-blur px-3 py-1.5 rounded-full hover:bg-black/70 transition disabled:opacity-60"
+            >
+              <Camera size={15} /> {uploadingAvatar ? 'Загрузка...' : 'Сменить фото'}
+            </button>
+          </>
+        )}
+
         <div className="absolute bottom-0 left-0 right-0 px-4 md:px-8 pb-5">
           {isVerified && (
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-white/90 bg-black/40 backdrop-blur px-2.5 py-1 rounded-full mb-3">
@@ -80,25 +118,25 @@ export const ArtistPage = () => {
         </div>
       </div>
 
-      {/* Action bar */}
       <div className="px-4 md:px-8 mt-5 flex flex-wrap items-center gap-4">
-        <div className="flex -space-x-2">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-7 h-7 rounded-full border-2 border-black bg-gradient-to-br from-violet-500 to-blue-500" />
-          ))}
-        </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#8a8a8a]">
-          <span><span className="text-white font-semibold">{formatNumber(followers)}</span> followers</span>
-          <span><span className="text-white font-semibold">{trackCount}</span> tracks</span>
-          <span><span className="text-white font-semibold">{formatCount(totalPlays)}</span> plays</span>
+          <span><span className="text-white font-semibold">{trackCount}</span> {trackCount === 1 ? 'трек' : 'треков'}</span>
+          <span><span className="text-white font-semibold">{formatCount(totalPlays)}</span> прослушиваний</span>
+          <span>с <span className="text-white font-semibold">{memberSince}</span></span>
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={() => setFollowing((f) => !f)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${following ? 'bg-[#222] text-white border border-[#333]' : 'bg-white text-black hover:opacity-90'}`}
-          >
-            {following ? <><Check size={16} /> Following</> : <><UserPlus size={16} /> Follow</>}
-          </button>
+          {isOwn ? (
+            <button onClick={() => setEditing(true)} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black flex items-center gap-2 hover:opacity-90 transition">
+              <Pencil size={15} /> Редактировать
+            </button>
+          ) : (
+            <button
+              onClick={() => setFollowing((f) => !f)}
+              className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${following ? 'bg-[#222] text-white border border-[#333]' : 'bg-white text-black hover:opacity-90'}`}
+            >
+              {following ? <><Check size={16} /> Following</> : <><UserPlus size={16} /> Follow</>}
+            </button>
+          )}
           <button onClick={handlePlayAll} className="px-5 py-2 rounded-full text-sm font-semibold border border-[#242424] flex items-center gap-2 hover:border-white/50 transition">
             <Play size={16} /> Play All
           </button>
@@ -108,7 +146,6 @@ export const ArtistPage = () => {
         </div>
       </div>
 
-      {/* Tracks */}
       <div className="px-4 md:px-8 mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Tracks</h2>
@@ -122,9 +159,8 @@ export const ArtistPage = () => {
           </div>
         </div>
 
-        {/* table header */}
-        <div className="hidden md:grid grid-cols-[24px_1fr_100px_120px_80px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
-          <span>#</span><span>Title</span><span className="text-right">Plays</span><span className="text-right">Released</span><span className="text-right">Duration</span><span></span>
+        <div className="hidden md:grid grid-cols-[24px_1fr_120px_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
+          <span>#</span><span>Title</span><span className="text-right">Plays</span><span className="text-right">Released</span><span></span>
         </div>
 
         <div className="mt-1">
@@ -148,30 +184,26 @@ export const ArtistPage = () => {
         )}
       </div>
 
-      {/* About + Stats */}
       <div className="px-4 md:px-8 mt-10 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 border-t border-[#1a1a1a] pt-8">
         <div>
           <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">About</h3>
-          <p className="text-sm text-[#bdbdbd] leading-relaxed">
-            {name} — независимый артист на NextSound. {trackCount > 0 ? `Опубликовано ${trackCount} ${trackCount === 1 ? 'трек' : 'треков'}, суммарно ${formatNumber(totalPlays)} прослушиваний.` : 'Пока без публикаций.'} Слушайте, лайкайте и добавляйте треки в плейлисты.
+          <p className="text-sm text-[#bdbdbd] leading-relaxed whitespace-pre-line">
+            {displayArtist.bio?.trim()
+              ? displayArtist.bio
+              : `${name} — артист на NextSound.${trackCount > 0 ? ` ${trackCount} ${trackCount === 1 ? 'трек' : 'треков'}, ${formatNumber(totalPlays)} прослушиваний.` : ' Пока без публикаций.'}`}
           </p>
-          <div className="flex items-center gap-3 mt-4">
-            <a className="w-9 h-9 rounded-full bg-[#151515] flex items-center justify-center text-[#888] hover:text-white transition"><AtSign size={16} /></a>
-            <a className="w-9 h-9 rounded-full bg-[#151515] flex items-center justify-center text-[#888] hover:text-white transition"><Send size={16} /></a>
-            <a className="w-9 h-9 rounded-full bg-[#151515] flex items-center justify-center text-[#888] hover:text-white transition"><Globe size={16} /></a>
-          </div>
         </div>
         <div>
           <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">Stats</h3>
           <dl className="space-y-3 text-sm">
-            <StatRow k="Monthly Listeners" v={formatNumber(monthlyListeners)} />
-            <StatRow k="Total Plays" v={formatCount(totalPlays)} />
-            <StatRow k="Followers" v={formatNumber(followers)} />
-            <StatRow k="Following" v={formatNumber(followingCount)} />
+            <StatRow k="Total Plays" v={formatNumber(totalPlays)} />
+            <StatRow k="Tracks" v={String(trackCount)} />
             <StatRow k="Member Since" v={String(memberSince)} />
           </dl>
         </div>
       </div>
+
+      {editing && me && <EditProfileModal onClose={() => setEditing(false)} />}
     </div>
   );
 };
@@ -183,13 +215,61 @@ const StatRow = ({ k, v }: { k: string; v: string }) => (
   </div>
 );
 
+const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
+  const { user, updateProfile } = useAuthStore();
+  const [form, setForm] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    nickname: user?.nickname || '',
+    bio: user?.bio || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateProfile(form);
+      toast.success('Профиль обновлён');
+      onClose();
+    } catch {
+      toast.error('Не удалось сохранить');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={save} className="w-full max-w-md bg-[#111] border border-[#242424] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">Редактировать профиль</h3>
+          <button type="button" onClick={onClose} className="text-[#666] hover:text-white transition"><X size={18} /></button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <input className="ns-input" placeholder="Имя" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+          <input className="ns-input" placeholder="Фамилия" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+        </div>
+        <input className="ns-input" placeholder="Никнейм" value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+        <textarea className="ns-input resize-none h-28" placeholder="О себе" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+        <div className="flex justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
+          <button type="submit" disabled={saving} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black hover:opacity-90 transition disabled:opacity-60">
+            {saving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 const TrackRow = ({ t, index, isPlaying, isCurrent, onPlay, onOpen }: {
   t: Track; index: number; isPlaying: boolean; isCurrent: boolean; onPlay: () => void; onOpen: () => void;
 }) => {
   const cover = resolveAssetUrl(t.cover_path);
-  const duration = `${3 + (t.id % 4)}:${(derivedStat(t.id, 0, 59)).toString().padStart(2, '0')}`;
+  const released = new Date(t.release_date || t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return (
-    <div className={`group grid grid-cols-[24px_1fr_auto] md:grid-cols-[24px_1fr_100px_120px_80px_40px] gap-3 md:gap-4 items-center px-3 py-2 rounded-lg transition cursor-pointer ${isCurrent ? 'bg-white/5' : 'hover:bg-white/5'}`}>
+    <div className={`group grid grid-cols-[24px_1fr_auto] md:grid-cols-[24px_1fr_120px_140px_40px] gap-3 md:gap-4 items-center px-3 py-2 rounded-lg transition ${isCurrent ? 'bg-white/5' : 'hover:bg-white/5'}`}>
       <button onClick={onPlay} className="w-6 flex items-center justify-center text-[#888]">
         {isCurrent ? (
           isPlaying ? <BarChart3 size={15} className="text-white" /> : <Pause size={14} className="text-white" />
@@ -200,7 +280,7 @@ const TrackRow = ({ t, index, isPlaying, isCurrent, onPlay, onOpen }: {
           </>
         )}
       </button>
-      <div className="flex items-center gap-3 min-w-0" onClick={onOpen}>
+      <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={onOpen}>
         <img src={cover} alt="" onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515] shrink-0" />
         <div className="min-w-0">
           <p className={`text-sm font-medium truncate ${isCurrent ? 'text-white' : ''}`}>{t.title}</p>
@@ -208,8 +288,7 @@ const TrackRow = ({ t, index, isPlaying, isCurrent, onPlay, onOpen }: {
         </div>
       </div>
       <span className="text-sm text-[#888] text-right hidden md:block">{formatCount(t.plays_count)}</span>
-      <span className="text-sm text-[#888] text-right hidden md:block">{formatDate(t.release_date || t.created_at)}</span>
-      <span className="text-sm text-[#888] text-right hidden md:block">{duration}</span>
+      <span className="text-sm text-[#888] text-right hidden md:block">{released}</span>
       <button className="text-[#666] hover:text-red-400 transition justify-self-end" onClick={(e) => e.stopPropagation()}>
         <Heart size={15} />
       </button>

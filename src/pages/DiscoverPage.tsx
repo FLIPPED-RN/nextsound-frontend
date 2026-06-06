@@ -32,7 +32,6 @@ export const DiscoverPage = () => {
 
   return (
     <div className="px-4 md:px-8 py-6 space-y-10">
-      {/* Featured hero */}
       {featured && (
         <div className="relative overflow-hidden rounded-3xl">
           <img src={resolveAssetUrl(featured.cover_path)} alt="" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-40" />

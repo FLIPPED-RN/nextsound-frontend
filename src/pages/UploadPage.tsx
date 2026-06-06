@@ -78,7 +78,6 @@ export const UploadPage = () => {
 
   return (
     <form onSubmit={handleSubmit} className="px-4 md:px-8 py-6 max-w-5xl mx-auto">
-      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Artist Dashboard</p>
@@ -88,9 +87,7 @@ export const UploadPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-        {/* Left */}
         <div className="space-y-5">
-          {/* Dropzone */}
           <div
             {...getRootProps()}
             className={`border-2 border-dashed rounded-2xl p-10 md:p-14 text-center cursor-pointer transition ${isDragActive ? 'border-white bg-white/5' : 'border-[#2a2a2a] hover:border-[#444] bg-[#0e0e0e]'}`}
@@ -107,7 +104,6 @@ export const UploadPage = () => {
             </div>
           </div>
 
-          {/* File row */}
           {audioFile && (
             <div className="flex items-center gap-3 bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-3">
               <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
@@ -125,7 +121,6 @@ export const UploadPage = () => {
             </div>
           )}
 
-          {/* Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Название трека">
               <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Midnight Echoes" className="ns-input" />
@@ -145,9 +140,7 @@ export const UploadPage = () => {
           </Field>
         </div>
 
-        {/* Right */}
         <div className="space-y-6">
-          {/* Cover */}
           <div>
             <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Cover Art</p>
             <label className="relative block aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-[#2a2a2a] hover:border-[#444] cursor-pointer group bg-[#0e0e0e]">
@@ -169,7 +162,6 @@ export const UploadPage = () => {
             <p className="text-xs text-[#666] mt-2">JPG, PNG или WEBP. Min 800×800</p>
           </div>
 
-          {/* Visibility */}
           <div>
             <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Доступ</p>
             <div className="space-y-2">
@@ -193,7 +185,6 @@ export const UploadPage = () => {
             </div>
           </div>
 
-          {/* Release date */}
           <div>
             <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Дата релиза</p>
             <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#1f1f1f]">

@@ -30,8 +30,6 @@ export const AppRouter = () => (
       <Route path="search" element={<SearchPage />} />
       <Route path="upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
       <Route path="liked" element={<ProtectedRoute><LikedPage /></ProtectedRoute>} />
-      {/* <Route path="playlists" element={<ProtectedRoute><PlaylistPage /></ProtectedRoute>} /> */}
-      {/* <Route path="playlists/:id" element={<ProtectedRoute><PlaylistPage /></ProtectedRoute>} /> */}
       <Route path="playlists" element={<PlaylistPage />} />
       <Route path="playlists/:id" element={<PlaylistPage />} />
     </Route>

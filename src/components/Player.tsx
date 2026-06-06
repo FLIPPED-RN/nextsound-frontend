@@ -85,7 +85,6 @@ export const Player = () => {
 
   return (
     <>
-      {/* FULLSCREEN MOBILE */}
       <div
         className={`
           md:hidden fixed inset-0 z-[100]
@@ -153,7 +152,6 @@ export const Player = () => {
               </button>
             </div>
 
-            {/* MOBILE PROGRESS */}
             <div className="w-full mt-8">
               <div
                 ref={mobileProgressRef}
@@ -191,7 +189,6 @@ export const Player = () => {
               </div>
             </div>
 
-            {/* CONTROLS */}
             <div className="flex items-center gap-8 mt-10">
               <button onClick={prevTrack}>
                 <SkipBack size={34} />
@@ -220,7 +217,6 @@ export const Player = () => {
               </button>
             </div>
 
-            {/* VOLUME */}
             <div className="w-full flex items-center gap-3 mt-10">
               <Volume2 size={20} />
 
@@ -240,9 +236,7 @@ export const Player = () => {
         </div>
       </div>
 
-      {/* MINI PLAYER */}
       <div className="flex items-center h-full px-3 md:px-6 gap-3">
-        {/* MOBILE */}
         <div
           className="
             md:hidden
@@ -277,7 +271,6 @@ export const Player = () => {
           </div>
         </div>
 
-        {/* MOBILE PLAY */}
         <button
           className="md:hidden"
           onClick={(e) => {
@@ -293,7 +286,6 @@ export const Player = () => {
           )}
         </button>
 
-        {/* DESKTOP */}
         <div className="hidden md:flex items-center gap-3 w-1/4 min-w-0">
           <img
             src={getCoverUrl(
@@ -326,7 +318,6 @@ export const Player = () => {
           </button>
         </div>
 
-        {/* DESKTOP CONTROLS */}
         <div className="hidden md:flex flex-1 flex-col items-center">
           <div className="flex items-center gap-4">
             <button onClick={prevTrack}>
@@ -394,7 +385,6 @@ export const Player = () => {
           </div>
         </div>
 
-        {/* DESKTOP VOLUME */}
         <div className="hidden md:flex items-center gap-2 w-1/4 justify-end">
           <Volume2 size={18} />
 

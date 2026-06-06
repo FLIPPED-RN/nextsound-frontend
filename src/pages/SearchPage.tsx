@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
@@ -6,12 +6,16 @@ import { TrackCard } from '../components/TrackCard';
 
 export const SearchPage = () => {
   const [query, setQuery] = useState('');
-  const q = query.trim();
+  const [debounced, setDebounced] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['search', q],
-    queryFn: () => tracksApi.getAll({ search: q }).then((r) => r.data),
-    enabled: q.length > 0,
+    queryKey: ['search', debounced],
+    queryFn: () => tracksApi.searchTracks(debounced).then((r) => r.data),
   });
 
   return (
@@ -23,7 +27,7 @@ export const SearchPage = () => {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Треки или артисты..."
+            placeholder="Треки, артисты, жанры..."
             autoFocus
             className="w-full pl-12 pr-12 py-3.5 bg-[#0e0e0e] border border-[#1f1f1f] rounded-full text-white outline-none transition focus:border-violet-500/60 placeholder:text-[#555]"
           />
@@ -35,19 +39,13 @@ export const SearchPage = () => {
         </div>
       </div>
 
-      {!q ? (
-        <div className="flex flex-col items-center justify-center text-center py-24 text-[#555]">
-          <SearchIcon size={40} />
-          <p className="mt-4 text-lg text-[#888]">Начните вводить запрос</p>
-          <p className="text-sm">Найдите любимые треки и исполнителей</p>
-        </div>
-      ) : isLoading || isFetching ? (
+      {isLoading || isFetching ? (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {Array(5).fill(0).map((_, i) => <div key={i} className="aspect-square bg-[#151515] rounded-2xl animate-pulse" />)}
+          {Array(10).fill(0).map((_, i) => <div key={i} className="aspect-square bg-[#151515] rounded-2xl animate-pulse" />)}
         </div>
       ) : data?.length ? (
         <>
-          <p className="text-sm text-[#888]">Найдено: {data.length}</p>
+          <p className="text-sm text-[#888]">{debounced ? `Найдено: ${data.length}` : 'Все треки'}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {data.map((t) => <TrackCard key={t.id} track={t} />)}
           </div>

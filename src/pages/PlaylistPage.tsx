@@ -1,48 +1,72 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { Play, Pause, Plus, Trash2, ListMusic, LayoutGrid, List, ChevronLeft, BarChart3 } from 'lucide-react';
+import { Play, Pause, Plus, Trash2, ListMusic, LayoutGrid, List, ChevronLeft, BarChart3, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { playlistsApi } from '../api/playlists.api';
 import { usePlayerStore } from '../store/player.store';
-import { resolveAssetUrl, formatTotalDuration, formatDate, derivedStat } from '@/lib/utils';
+import { resolveAssetUrl, formatDate } from '@/lib/utils';
 import type { Playlist, Track } from '@/types';
 
 const extractTracks = (data: any): Track[] =>
   Array.isArray(data) ? data.map((item: any) => item.track || item).filter(Boolean) : [];
-
-/** Total seconds for a playlist (durations not stored -> deterministic estimate). */
-const estimateDuration = (tracks: Track[]) =>
-  tracks.reduce((s, t) => s + (180 + derivedStat(t.id, 0, 180)), 0);
 
 export const PlaylistPage = () => {
   const { id } = useParams<{ id: string }>();
   return id ? <PlaylistDetail playlistId={Number(id)} /> : <PlaylistsGrid />;
 };
 
-/* ------------------------------- LIST VIEW ------------------------------- */
+const NewPlaylistModal = ({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) => {
+  const [name, setName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const create = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await playlistsApi.create(name.trim());
+      toast.success('Плейлист создан');
+      onCreated();
+      onClose();
+    } catch {
+      toast.error('Не удалось создать плейлист');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={create} className="w-full max-w-sm bg-[#111] border border-[#242424] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">Новый плейлист</h3>
+          <button type="button" onClick={onClose} className="text-[#666] hover:text-white transition"><X size={18} /></button>
+        </div>
+        <input autoFocus className="ns-input" placeholder="Название плейлиста" value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
+          <button type="submit" disabled={saving || !name.trim()} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black hover:opacity-90 transition disabled:opacity-60">
+            {saving ? 'Создание...' : 'Создать'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const PlaylistsGrid = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [creating, setCreating] = useState(false);
 
   const { data: playlists, isLoading } = useQuery({
     queryKey: ['my-playlists'],
     queryFn: () => playlistsApi.getMy().then((r) => r.data),
   });
 
-  const handleCreate = async () => {
-    const name = window.prompt('Название плейлиста');
-    if (!name?.trim()) return;
-    try {
-      await playlistsApi.create(name.trim());
-      toast.success('Плейлист создан');
-      qc.invalidateQueries({ queryKey: ['my-playlists'] });
-    } catch {
-      toast.error('Не удалось создать плейлист');
-    }
-  };
+  const refetch = () => qc.invalidateQueries({ queryKey: ['my-playlists'] });
 
   const list = playlists || [];
   const recent = list.slice(0, 4);
@@ -54,14 +78,11 @@ const PlaylistsGrid = () => {
           <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Your Library</p>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">YOUR PLAYLISTS</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleCreate} className="px-4 py-2 rounded-full bg-white text-black text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition">
-            <Plus size={16} /> New Playlist
-          </button>
-        </div>
+        <button onClick={() => setCreating(true)} className="px-4 py-2 rounded-full bg-white text-black text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition">
+          <Plus size={16} /> New Playlist
+        </button>
       </div>
 
-      {/* Stats bar */}
       <div className="flex items-center justify-between border-y border-[#1a1a1a] py-3 mb-6 text-sm">
         <div className="flex items-center gap-5 text-[#888]">
           <span><span className="text-white font-semibold">{list.length}</span> Playlists</span>
@@ -91,7 +112,7 @@ const PlaylistsGrid = () => {
           <div className={view === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4' : 'space-y-2'}>
             {list.map((p) => <PlaylistCard key={p.id} playlist={p} view={view} onOpen={() => navigate(`/playlists/${p.id}`)} />)}
             <button
-              onClick={handleCreate}
+              onClick={() => setCreating(true)}
               className={view === 'grid'
                 ? 'aspect-square rounded-2xl border-2 border-dashed border-[#242424] hover:border-[#444] flex flex-col items-center justify-center text-[#666] hover:text-white transition'
                 : 'w-full flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-[#242424] hover:border-[#444] text-[#666] hover:text-white transition'}
@@ -106,6 +127,8 @@ const PlaylistsGrid = () => {
           )}
         </>
       )}
+
+      {creating && <NewPlaylistModal onClose={() => setCreating(false)} onCreated={refetch} />}
     </div>
   );
 };
@@ -118,7 +141,7 @@ const PlaylistCard = ({ playlist, view, onOpen }: { playlist: Playlist; view: 'g
   });
   const tracks = extractTracks(data);
   const cover = tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
-  const meta = `${tracks.length} tracks · ${formatTotalDuration(estimateDuration(tracks))}`;
+  const meta = `${tracks.length} ${tracks.length === 1 ? 'трек' : 'треков'}`;
 
   const playAll = (e: React.MouseEvent) => { e.stopPropagation(); if (tracks.length) setTrack(tracks[0], tracks); };
 
@@ -162,8 +185,6 @@ const CoverBox = ({ cover }: { cover: string }) => (
   </div>
 );
 
-/* ------------------------------ DETAIL VIEW ------------------------------ */
-
 const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -206,7 +227,7 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
         <div className="min-w-0">
           <p className="text-xs tracking-widest text-[#666] uppercase mb-2">Playlist</p>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight break-words">{playlist.name}</h1>
-          <p className="text-sm text-[#888] mt-3">{tracks.length} tracks · {formatTotalDuration(estimateDuration(tracks))}</p>
+          <p className="text-sm text-[#888] mt-3">{tracks.length} {tracks.length === 1 ? 'трек' : 'треков'}</p>
           {tracks.length > 0 && (
             <button onClick={() => setTrack(tracks[0], tracks)} className="mt-4 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
               <Play size={16} /> Play All

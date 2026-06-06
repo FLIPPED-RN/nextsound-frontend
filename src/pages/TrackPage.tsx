@@ -12,13 +12,8 @@ import { playlistsApi } from '../api/playlists.api';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { Waveform } from '../components/Waveform';
-import {
-  resolveAssetUrl, formatCount, formatTime, formatDate, formatNumber,
-  timeAgo, derivedStat,
-} from '@/lib/utils';
+import { resolveAssetUrl, formatCount, formatTime, formatDate, timeAgo } from '@/lib/utils';
 import type { Comment } from '@/types';
-
-const KEYS = ['A minor', 'C major', 'G major', 'E minor', 'D major', 'F# minor', 'B minor'];
 
 const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) => (
   <span className="inline-flex items-center gap-1.5 text-sm text-[#8a8a8a]">
@@ -47,13 +42,6 @@ const CommentRow = ({ c, nested }: { c: Comment; nested?: boolean }) => {
           <span className="text-xs text-[#666]">{timeAgo(c.created_at)}</span>
         </div>
         <p className="text-sm text-[#c9c9c9] mt-1 break-words">{c.text}</p>
-        <div className="flex items-center gap-4 mt-1.5 text-xs text-[#666]">
-          <button className="inline-flex items-center gap-1 hover:text-white transition">
-            <Heart size={13} /> {derivedStat(c.id, 3, 50)}
-          </button>
-          <button className="hover:text-white transition">Reply</button>
-          <button className="hover:text-white transition"><MoreHorizontal size={14} /></button>
-        </div>
       </div>
     </div>
   );
@@ -166,14 +154,11 @@ export const TrackPage = () => {
   };
 
   const tags = (track.genre || '').split(/[\s,/]+/).filter(Boolean).slice(0, 4);
-  const sharesCount = derivedStat(track.id + 7, 200, 5000);
   const commentsCount = comments?.length ?? 0;
   const visibleComments = showAll ? comments : comments?.slice(0, 5);
-  const trackKey = KEYS[track.id % KEYS.length];
 
   return (
     <div className="px-4 md:px-8 py-4 md:py-6 max-w-5xl mx-auto">
-      {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition shrink-0">
@@ -194,7 +179,6 @@ export const TrackPage = () => {
         </div>
       </div>
 
-      {/* Hero */}
       <div className="flex flex-col md:flex-row gap-6">
         <img
           src={cover}
@@ -219,15 +203,12 @@ export const TrackPage = () => {
             <span className="text-sm text-[#666]">{year}</span>
           </button>
 
-          {/* Stats */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5">
             <Stat icon={<Play size={14} />} value={formatCount(track.plays_count)} label="прослушиваний" />
             <Stat icon={<Heart size={14} />} value={formatCount(likeCount)} label="лайков" />
             <Stat icon={<MessageCircle size={14} />} value={formatCount(commentsCount)} label="комментария" />
-            <Stat icon={<Repeat2 size={14} />} value={formatCount(sharesCount)} label="поделились" />
           </div>
 
-          {/* Actions */}
           <div className="flex flex-wrap items-center gap-3 mt-6">
             <button onClick={handlePlay} className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shrink-0">
               {isThisPlaying ? <Pause size={22} /> : <Play size={22} className="ml-0.5" />}
@@ -259,7 +240,6 @@ export const TrackPage = () => {
         </div>
       </div>
 
-      {/* Waveform */}
       <div className="mt-8 border-y border-[#1a1a1a] py-5">
         <div className="flex items-center justify-between text-xs text-[#888] mb-2">
           <span>{formatTime(isActive ? progress : 0)}</span>
@@ -279,7 +259,6 @@ export const TrackPage = () => {
         )}
       </div>
 
-      {/* Description + Info */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 mt-8">
         <div>
           <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">Описание трека</h3>
@@ -300,13 +279,11 @@ export const TrackPage = () => {
             <InfoRow k="Дата релиза" v={formatDate(track.release_date || track.created_at)} />
             <InfoRow k="Продолжительность" v={trackDuration ? formatTime(trackDuration) : '—'} />
             <InfoRow k="BPM" v={track.bpm ? String(track.bpm) : '—'} />
-            <InfoRow k="Key" v={trackKey} />
-            <InfoRow k="License" v="All rights reserved" />
+            <InfoRow k="Жанр" v={track.genre || '—'} />
           </dl>
         </div>
       </div>
 
-      {/* Comments */}
       <div className="mt-10">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-xl font-bold flex items-center gap-2">
@@ -345,7 +322,6 @@ export const TrackPage = () => {
           </div>
         )}
       </div>
-      <div className="text-[10px] text-[#333] mt-8">{formatNumber(track.plays_count)} total plays{reposted ? ' · reposted' : ''}</div>
     </div>
   );
 };

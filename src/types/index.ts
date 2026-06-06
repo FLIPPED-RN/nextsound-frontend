@@ -5,8 +5,17 @@ export interface User {
   nickname?: string;
   email: string;
   role: 'listener' | 'artist' | 'admin';
+  avatar?: string;
+  bio?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface UpdateProfileDto {
+  firstName?: string;
+  lastName?: string;
+  nickname?: string;
+  bio?: string;
 }
 
 export interface Track {

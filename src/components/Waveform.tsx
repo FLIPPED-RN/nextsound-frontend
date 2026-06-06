@@ -71,7 +71,6 @@ export const Waveform = ({
         };
     }, [audioUrl]);
 
-    // Синхронизация play/pause из глобального плеера
     useEffect(() => {
         const ws = wavesurferRef.current;
         if (!ws) return;
@@ -82,7 +81,6 @@ export const Waveform = ({
         }
     }, [isPlaying]);
 
-    // Синхронизация перемотки из глобального плеера
     useEffect(() => {
         const ws = wavesurferRef.current;
         if (!ws || isSeeking.current) return;

@@ -15,7 +15,6 @@ export const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">
-      {/* DESKTOP SIDEBAR */}
       <aside
         className={`
           hidden md:flex
@@ -26,7 +25,6 @@ export const MainLayout = () => {
         <Sidebar />
       </aside>
 
-      {/* CONTENT */}
       <main
         className={`
           flex-1 md:pl-64 overflow-y-auto
@@ -40,7 +38,6 @@ export const MainLayout = () => {
         <Outlet />
       </main>
 
-      {/* PLAYER */}
       {currentTrack && (
         <div
           className="
@@ -56,7 +53,6 @@ export const MainLayout = () => {
         </div>
       )}
 
-      {/* MOBILE NAVBAR */}
       <nav
         className={`
           md:hidden fixed bottom-0 left-0 right-0

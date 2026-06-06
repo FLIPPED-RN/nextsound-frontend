@@ -8,7 +8,6 @@ const features = [
   'Лайкай, комментируй и делись музыкой',
 ];
 
-/** Animated equalizer bars for visual flavor. */
 const Equalizer = () => (
   <div className="flex items-end gap-1 h-10">
     {Array.from({ length: 28 }).map((_, i) => (
@@ -25,7 +24,6 @@ const Equalizer = () => (
 
 export const AuthShell = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen w-full bg-[#050505] text-white flex">
-    {/* Visual side */}
     <div className="hidden lg:flex relative w-[45%] xl:w-1/2 overflow-hidden">
       <img src={poster} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-tr from-black via-black/70 to-violet-900/30" />
@@ -58,7 +56,6 @@ export const AuthShell = ({ children }: { children: React.ReactNode }) => (
       </div>
     </div>
 
-    {/* Form side */}
     <div className="flex-1 flex items-center justify-center p-6 relative">
       <div
         className="absolute inset-0 opacity-60 pointer-events-none"
@@ -70,7 +67,6 @@ export const AuthShell = ({ children }: { children: React.ReactNode }) => (
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-md"
       >
-        {/* Mobile logo */}
         <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
           <img src={logo} alt="NextSound" className="w-10 h-10" />
           <span className="text-xl font-bold">NextSound</span>

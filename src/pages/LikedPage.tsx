@@ -17,7 +17,6 @@ export const LikedPage = () => {
 
   return (
     <div className="px-4 md:px-8 py-6">
-      {/* Header banner */}
       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end mb-8">
         <div className="w-44 h-44 rounded-2xl bg-gradient-to-br from-red-500 via-pink-600 to-violet-700 flex items-center justify-center shadow-2xl shrink-0">
           <Heart size={56} className="fill-white text-white" />

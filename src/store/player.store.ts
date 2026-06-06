@@ -1,6 +1,7 @@
 import type { Track } from '@/types';
 import { create } from 'zustand';
 import { resolveAssetUrl } from '@/lib/utils';
+import { tracksApi } from '@/api/tracks.api';
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -77,6 +78,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     };
 
     audio.play();
+
+    tracksApi.incrementPlay(track.id).catch(() => {});
 
     set({
       currentTrack: track,

@@ -23,7 +23,6 @@ export const RegisterPage = () => {
     setLoading(true);
     try {
       await register(form);
-      // auto-login after successful signup
       try {
         await login(form.email, form.password);
         toast.success('Добро пожаловать в NextSound!');

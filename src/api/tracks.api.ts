@@ -4,6 +4,7 @@ import { apiClient } from "./client";
 export const tracksApi = {
   getAll: (params?: { search?: string; genre?: string }) =>
     apiClient.get<Track[]>('/tracks', { params }),
+  searchTracks: (q: string) => apiClient.get<Track[]>('/tracks/search', { params: { q } }),
   getOne: (id: number) => apiClient.get<Track>(`/tracks/${id}`),
   getMy: () => apiClient.get<Track[]>('/tracks/my'),
   create: (data: FormData) =>
