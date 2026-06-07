@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
-import { Play, Pause, Heart, BadgeCheck, MoreHorizontal, UserPlus, Check, BarChart3, Camera, Pencil, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Play, Pause, Heart, BadgeCheck, UserPlus, Check, BarChart3, Camera, Pencil, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usersApi } from '../api/users.api';
 import { tracksApi } from '../api/tracks.api';
@@ -45,6 +45,34 @@ export const ArtistPage = () => {
     if (sort === 'oldest') list.sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
     return list;
   }, [tracks, sort]);
+
+  const { data: likedData } = useQuery({
+    queryKey: ['my-liked-ids'],
+    queryFn: () => tracksApi.getLiked().then((r) => r.data),
+    enabled: !!me,
+  });
+  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    if (likedData) setLikedIds(new Set(likedData.map((d) => d.track?.id).filter(Boolean) as number[]));
+  }, [likedData]);
+
+  const toggleLike = async (trackId: number) => {
+    if (!me) { toast.error('Войдите, чтобы лайкать'); return; }
+    setLikedIds((prev) => {
+      const n = new Set(prev);
+      n.has(trackId) ? n.delete(trackId) : n.add(trackId);
+      return n;
+    });
+    try {
+      await tracksApi.toggleLike(trackId);
+    } catch {
+      setLikedIds((prev) => {
+        const n = new Set(prev);
+        n.has(trackId) ? n.delete(trackId) : n.add(trackId);
+        return n;
+      });
+    }
+  };
 
   const displayArtist = isOwn && me ? { ...artist, ...me } as User : artist;
 
@@ -124,24 +152,21 @@ export const ArtistPage = () => {
           <span><span className="text-white font-semibold">{formatCount(totalPlays)}</span> прослушиваний</span>
           <span>с <span className="text-white font-semibold">{memberSince}</span></span>
         </div>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
           {isOwn ? (
-            <button onClick={() => setEditing(true)} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black flex items-center gap-2 hover:opacity-90 transition">
+            <button onClick={() => setEditing(true)} className="flex-1 sm:flex-none sm:min-w-[160px] h-10 rounded-full text-sm font-semibold bg-white text-black flex items-center justify-center gap-2 hover:opacity-90 transition">
               <Pencil size={15} /> Редактировать
             </button>
           ) : (
             <button
               onClick={() => setFollowing((f) => !f)}
-              className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${following ? 'bg-[#222] text-white border border-[#333]' : 'bg-white text-black hover:opacity-90'}`}
+              className={`flex-1 sm:flex-none sm:min-w-[160px] h-10 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition ${following ? 'bg-[#222] text-white border border-[#333]' : 'bg-white text-black hover:opacity-90'}`}
             >
               {following ? <><Check size={16} /> Вы подписаны</> : <><UserPlus size={16} /> Подписаться</>}
             </button>
           )}
-          <button onClick={handlePlayAll} className="px-5 py-2 rounded-full text-sm font-semibold border border-[#242424] flex items-center gap-2 hover:border-white/50 transition">
+          <button onClick={handlePlayAll} className="flex-1 sm:flex-none sm:min-w-[160px] h-10 rounded-full text-sm font-semibold border border-[#242424] flex items-center justify-center gap-2 hover:border-white/50 transition">
             <Play size={16} /> Слушать всё
-          </button>
-          <button className="w-9 h-9 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition">
-            <MoreHorizontal size={16} />
           </button>
         </div>
       </div>
@@ -168,6 +193,8 @@ export const ArtistPage = () => {
             <TrackRow key={t.id} t={t} index={i + 1}
               isPlaying={currentTrack?.id === t.id && isPlaying}
               isCurrent={currentTrack?.id === t.id}
+              liked={likedIds.has(t.id)}
+              onLike={() => toggleLike(t.id)}
               onPlay={() => { if (currentTrack?.id === t.id) togglePlay(); else setTrack(t, sorted); }}
               onOpen={() => navigate(`/track/${t.id}`)}
             />
@@ -263,8 +290,8 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-const TrackRow = ({ t, index, isPlaying, isCurrent, onPlay, onOpen }: {
-  t: Track; index: number; isPlaying: boolean; isCurrent: boolean; onPlay: () => void; onOpen: () => void;
+const TrackRow = ({ t, index, isPlaying, isCurrent, liked, onLike, onPlay, onOpen }: {
+  t: Track; index: number; isPlaying: boolean; isCurrent: boolean; liked: boolean; onLike: () => void; onPlay: () => void; onOpen: () => void;
 }) => {
   const cover = resolveAssetUrl(t.cover_path);
   const released = new Date(t.release_date || t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -289,8 +316,11 @@ const TrackRow = ({ t, index, isPlaying, isCurrent, onPlay, onOpen }: {
       </div>
       <span className="text-sm text-[#888] text-right hidden md:block">{formatCount(t.plays_count)}</span>
       <span className="text-sm text-[#888] text-right hidden md:block">{released}</span>
-      <button className="text-[#666] hover:text-red-400 transition justify-self-end" onClick={(e) => e.stopPropagation()}>
-        <Heart size={15} />
+      <button
+        onClick={(e) => { e.stopPropagation(); onLike(); }}
+        className={`transition justify-self-end ${liked ? 'text-red-500' : 'text-[#666] hover:text-red-400'}`}
+      >
+        <Heart size={15} className={liked ? 'fill-red-500' : ''} />
       </button>
     </div>
   );

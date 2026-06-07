@@ -41,3 +41,13 @@ body {
 }
 .ns-input::placeholder { color: #555; }
 .ns-input:focus { border-color: #555; }
+
+@keyframes ns-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ns-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ns-marquee 9s linear infinite;
+}

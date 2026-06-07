@@ -1,6 +1,7 @@
 import { usePlayerStore } from '../store/player.store';
 import { tracksApi } from '../api/tracks.api';
 import { resolveAssetUrl } from '../lib/utils';
+import { ScrollingText } from './ScrollingText';
 
 import {
   Play,
@@ -128,19 +129,16 @@ export const Player = () => {
               "
             />
 
-            <div className="w-full mt-8 flex items-center justify-between">
-              <div className="min-w-0">
-                <h2 className="text-2xl font-bold truncate">
-                  {currentTrack.title}
-                </h2>
-
+            <div className="w-full mt-8 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <ScrollingText text={currentTrack.title} className="text-2xl font-bold" />
                 <p className="text-[#888] mt-1 truncate">
                   {currentTrack.user?.nickname ||
                     currentTrack.user?.firstName}
                 </p>
               </div>
 
-              <button onClick={handleLike}>
+              <button onClick={handleLike} className="shrink-0">
                 <Heart
                   size={24}
                   className={
@@ -244,10 +242,7 @@ export const Player = () => {
           />
 
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate">
-              {currentTrack.title}
-            </p>
-
+            <ScrollingText text={currentTrack.title} className="text-sm font-medium" />
             <p className="text-xs text-[#888888] truncate">
               {currentTrack.user?.nickname ||
                 currentTrack.user?.firstName}
@@ -280,10 +275,7 @@ export const Player = () => {
           />
 
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate">
-              {currentTrack.title}
-            </p>
-
+            <ScrollingText text={currentTrack.title} className="text-sm font-medium" />
             <p className="text-xs text-[#888888] truncate">
               {currentTrack.user?.nickname ||
                 currentTrack.user?.firstName}

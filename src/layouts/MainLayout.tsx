@@ -31,7 +31,7 @@ export const MainLayout = () => {
           flex-1 md:pl-64 overflow-y-auto
           ${
             currentTrack
-              ? 'pb-36 md:pb-24'
+              ? 'pb-44 md:pb-24'
               : 'pb-20'
           }
         `}
