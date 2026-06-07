@@ -10,11 +10,20 @@ import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { useAuthStore } from '../store/auth.store';
 import { PlaylistPage } from '@/pages/PlaylistPage';
+import { AdminPage } from '../pages/AdminPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuthStore();
   if (isLoading) return <div className="h-screen bg-black flex items-center justify-center"><div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>;
   if (!user) return <Navigate to="/login" />;
+  return <>{children}</>;
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) return <div className="h-screen bg-black flex items-center justify-center"><div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>;
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== 'admin') return <Navigate to="/" />;
   return <>{children}</>;
 };
 
@@ -32,6 +41,7 @@ export const AppRouter = () => (
       <Route path="liked" element={<ProtectedRoute><LikedPage /></ProtectedRoute>} />
       <Route path="playlists" element={<PlaylistPage />} />
       <Route path="playlists/:id" element={<PlaylistPage />} />
+      <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
     </Route>
   </Routes>
 );

@@ -28,6 +28,17 @@ export function formatNumber(n?: number): string {
   return (n ?? 0).toLocaleString("en-US");
 }
 
+export function formatBytes(bytes?: number): string {
+  const b = Number(bytes) || 0;
+  if (b < 1024) return `${b} Б`;
+  const kb = b / 1024;
+  if (kb < 1024) return `${kb.toFixed(0)} КБ`;
+  const mb = kb / 1024;
+  if (mb < 1024) return `${mb.toFixed(mb < 10 ? 1 : 0)} МБ`;
+  const gb = mb / 1024;
+  return `${gb.toFixed(2)} ГБ`;
+}
+
 export function formatTime(s?: number): string {
   if (!s || !isFinite(s)) return "0:00";
   const m = Math.floor(s / 60);

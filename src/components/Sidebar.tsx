@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Search, Upload, ListMusic, Heart } from 'lucide-react';
+import { Home, Search, Upload, ListMusic, Heart, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl } from '../lib/utils';
 
@@ -15,6 +15,10 @@ export const Sidebar = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
+  const navLinks = user?.role === 'admin'
+    ? [...links, { to: '/admin', icon: ShieldCheck, label: 'Админка' }]
+    : links;
+
   return (
     <div className="flex flex-col h-full bg-[#111111] border-r border-[#242424] px-4 py-5">
       <div className='flex items-center mb-10'>
@@ -23,7 +27,7 @@ export const Sidebar = () => {
       </div>
 
       <nav className="flex-1 space-y-1">
-        {links.map(({ to, icon: Icon, label }) => (
+        {navLinks.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
