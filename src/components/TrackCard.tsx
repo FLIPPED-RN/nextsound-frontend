@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl } from '@/lib/utils';
+import { ScrollingText } from './ScrollingText';
 import type { Track } from '@/types';
 
 export const TrackCard = ({ track }: { track: Track }) => {
@@ -34,7 +35,7 @@ export const TrackCard = ({ track }: { track: Track }) => {
         </button>
       </div>
       <div>
-        <p className="font-semibold truncate">{track.title}</p>
+        <ScrollingText text={track.title} className="font-semibold" />
         <p className="text-sm text-[#888888] truncate">
           {track.user?.nickname || track.user?.firstName}
         </p>

@@ -8,6 +8,7 @@ import { tracksApi } from '../api/tracks.api';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
+import { ScrollingText } from '../components/ScrollingText';
 import type { Track, User } from '@/types';
 
 type Sort = 'popular' | 'latest' | 'oldest';
@@ -310,7 +311,7 @@ const TrackRow = ({ t, index, isPlaying, isCurrent, liked, onLike, onPlay, onOpe
       <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={onOpen}>
         <img src={cover} alt="" onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515] shrink-0" />
         <div className="min-w-0">
-          <p className={`text-sm font-medium truncate ${isCurrent ? 'text-white' : ''}`}>{t.title}</p>
+          <ScrollingText text={t.title} className={`text-sm font-medium ${isCurrent ? 'text-white' : ''}`} />
           {t.genre && <p className="text-xs text-[#666] truncate">{t.genre}</p>}
         </div>
       </div>

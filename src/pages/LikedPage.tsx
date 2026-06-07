@@ -4,6 +4,7 @@ import { Heart, Play, Pause } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
+import { ScrollingText } from '../components/ScrollingText';
 
 export const LikedPage = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export const LikedPage = () => {
                 <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={() => navigate(`/track/${t.id}`)}>
                   <img src={resolveAssetUrl(t.cover_path)} alt="" onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515] shrink-0" />
                   <div className="min-w-0">
-                    <p className={`text-sm font-medium truncate ${isCurrent ? 'text-white' : ''}`}>{t.title}</p>
+                    <ScrollingText text={t.title} className={`text-sm font-medium ${isCurrent ? 'text-white' : ''}`} />
                     <p className="text-xs text-[#666] truncate">{t.user?.nickname || t.user?.firstName}</p>
                   </div>
                 </div>
