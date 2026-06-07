@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Play, Pause, Heart, Share2, Repeat2, Plus, ChevronLeft, ChevronRight,
+  Play, Pause, Heart, Share2, Repeat2, Plus, ChevronLeft,
   MoreHorizontal, MessageCircle, Pencil, Trash2, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -188,9 +188,6 @@ export const TrackPage = () => {
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition shrink-0">
             <ChevronLeft size={16} />
-          </button>
-          <button onClick={() => navigate(1)} className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center hover:border-white/50 transition shrink-0">
-            <ChevronRight size={16} />
           </button>
           <span className="text-sm text-[#8a8a8a] truncate ml-2">{track.genre || 'Музыка'}</span>
         </div>

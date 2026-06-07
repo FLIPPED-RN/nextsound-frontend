@@ -3,6 +3,7 @@ import { usePlayerStore } from '../store/player.store';
 import { Outlet } from 'react-router';
 import { Player } from '@/components/Player';
 import { MobileNavbar } from '@/components/MobileNavbar';
+import { MobileHeader } from '@/components/MobileHeader';
 
 export const MainLayout = () => {
   const currentTrack = usePlayerStore(
@@ -35,6 +36,7 @@ export const MainLayout = () => {
           }
         `}
       >
+        <MobileHeader />
         <Outlet />
       </main>
 

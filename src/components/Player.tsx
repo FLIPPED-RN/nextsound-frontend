@@ -216,22 +216,6 @@ export const Player = () => {
                 <SkipForward size={34} />
               </button>
             </div>
-
-            <div className="w-full flex items-center gap-3 mt-10">
-              <Volume2 size={20} />
-
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={volume}
-                onChange={(e) =>
-                  setVolume(+e.target.value)
-                }
-                className="flex-1 accent-white"
-              />
-            </div>
           </div>
         </div>
       </div>

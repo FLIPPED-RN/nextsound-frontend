@@ -1,24 +1,59 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
 import { TrackCard } from '@/components/TrackCard';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
-import type { Track } from '@/types';
+import type { Track, User } from '@/types';
 
-const Section = ({ title, tracks, loading }: { title: string; tracks?: Track[]; loading: boolean }) => (
-  <section className="space-y-4">
-    <div className="flex items-center justify-between">
+const Section = ({ title, tracks, loading }: { title: string; tracks?: Track[]; loading: boolean }) => {
+  const list = (tracks || []).slice(0, 10);
+  return (
+    <section className="space-y-4">
       <h2 className="text-2xl font-bold">{title}</h2>
-    </div>
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      {loading
-        ? Array(5).fill(0).map((_, i) => <div key={i} className="aspect-square bg-[#151515] rounded-2xl animate-pulse" />)
-        : tracks?.map((t) => <TrackCard key={t.id} track={t} />)}
-    </div>
-  </section>
-);
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {loading
+          ? Array(5).fill(0).map((_, i) => <div key={i} className="aspect-square bg-[#151515] rounded-2xl animate-pulse" />)
+          : list.map((t, i) => (
+            <div key={t.id} className={i >= 8 ? 'hidden lg:block' : ''}>
+              <TrackCard track={t} />
+            </div>
+          ))}
+      </div>
+    </section>
+  );
+};
+
+const NewArtists = ({ artists }: { artists: { user: User; count: number }[] }) => {
+  const navigate = useNavigate();
+  if (!artists.length) return null;
+  return (
+    <section className="space-y-4">
+      <h2 className="text-2xl font-bold">Новые имена</h2>
+      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+        {artists.map(({ user, count }) => (
+          <button
+            key={user.id}
+            onClick={() => navigate(`/artist/${user.id}`)}
+            className="shrink-0 w-28 flex flex-col items-center text-center group"
+          >
+            {user.avatar ? (
+              <img src={resolveAssetUrl(user.avatar)} alt="" className="w-24 h-24 rounded-full object-cover group-hover:scale-105 transition" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-3xl font-bold group-hover:scale-105 transition">
+                {(user.nickname || user.firstName || '?')[0]?.toUpperCase()}
+              </div>
+            )}
+            <p className="text-sm font-medium truncate w-full mt-2">{user.nickname || user.firstName}</p>
+            <p className="text-xs text-[#666]">{count} {count === 1 ? 'трек' : 'треков'}</p>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 export const DiscoverPage = () => {
   const { data: tracks, isLoading } = useQuery({
@@ -29,6 +64,18 @@ export const DiscoverPage = () => {
 
   const featured = tracks?.[0];
   const popular = useMemo(() => (tracks ? [...tracks].sort((a, b) => b.plays_count - a.plays_count) : []), [tracks]);
+
+  const newArtists = useMemo(() => {
+    if (!tracks) return [];
+    const map = new Map<number, { user: User; count: number }>();
+    for (const t of tracks) {
+      if (!t.user) continue;
+      const prev = map.get(t.userId);
+      if (prev) prev.count += 1;
+      else map.set(t.userId, { user: t.user, count: 1 });
+    }
+    return [...map.values()].sort((a, b) => +new Date(b.user.created_at) - +new Date(a.user.created_at)).slice(0, 12);
+  }, [tracks]);
 
   return (
     <div className="px-4 md:px-8 py-6 space-y-10">
@@ -58,9 +105,9 @@ export const DiscoverPage = () => {
         </div>
       )}
 
+      <NewArtists artists={newArtists} />
       <Section title="Новое" tracks={tracks} loading={isLoading} />
       <Section title="Популярное" tracks={popular} loading={isLoading} />
-      <Section title="Стоит послушать" tracks={tracks} loading={isLoading} />
 
       {!isLoading && !tracks?.length && (
         <div className="text-center py-20 text-[#666]">
