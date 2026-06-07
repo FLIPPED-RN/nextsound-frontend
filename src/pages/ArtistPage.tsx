@@ -86,7 +86,7 @@ export const ArtistPage = () => {
   const visible = showAll ? sorted : sorted.slice(0, 8);
 
   return (
-    <div className="pb-8">
+    <div className="pb-8 overflow-x-hidden">
       <div className="relative h-64 md:h-80">
         {banner ? (
           <img src={banner} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -114,7 +114,7 @@ export const ArtistPage = () => {
               <BadgeCheck size={14} className="text-blue-400" /> Проверенный артист
             </span>
           )}
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg">{name}</h1>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg break-words">{name}</h1>
         </div>
       </div>
 
@@ -147,12 +147,12 @@ export const ArtistPage = () => {
       </div>
 
       <div className="px-4 md:px-8 mt-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <h2 className="text-2xl font-bold">Треки</h2>
-          <div className="flex items-center gap-1 text-sm">
-            <span className="text-[#666] mr-1">Сортировка:</span>
+          <div className="flex items-center gap-1 text-sm flex-wrap">
+            <span className="text-[#666] mr-1 hidden sm:inline">Сортировка:</span>
             {(['popular', 'latest', 'oldest'] as Sort[]).map((s) => (
-              <button key={s} onClick={() => setSort(s)} className={`px-2.5 py-1 rounded-full transition ${sort === s ? 'text-white font-semibold' : 'text-[#666] hover:text-white'}`}>
+              <button key={s} onClick={() => setSort(s)} className={`px-3 py-1 rounded-full transition ${sort === s ? 'bg-white/10 text-white font-semibold' : 'text-[#888] hover:text-white'}`}>
                 {({ popular: 'Популярные', latest: 'Новые', oldest: 'Старые' } as Record<Sort, string>)[s]}
               </button>
             ))}
