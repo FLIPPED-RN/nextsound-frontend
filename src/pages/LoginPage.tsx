@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, LoaderCircle } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { AuthShell, AuthInput } from '../components/AuthShell';
+import { VerifyForm } from '../components/VerifyForm';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export const LoginPage = () => {
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
@@ -20,12 +22,25 @@ export const LoginPage = () => {
     try {
       await login(email, password);
       navigate('/');
-    } catch {
-      setError('Неверный email или пароль');
+    } catch (err: any) {
+      const data = err?.response?.data;
+      if (err?.response?.status === 403 && data?.needVerification) {
+        setPendingEmail(data.email || email);
+      } else {
+        setError('Неверный email или пароль');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (pendingEmail) {
+    return (
+      <AuthShell>
+        <VerifyForm email={pendingEmail} autoSend onBack={() => setPendingEmail(null)} />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell>

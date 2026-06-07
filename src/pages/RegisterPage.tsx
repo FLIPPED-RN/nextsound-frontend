@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, AtSign, ArrowRight, LoaderCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 import { AuthShell, AuthInput } from '../components/AuthShell';
+import { VerifyForm } from '../components/VerifyForm';
 
 export const RegisterPage = () => {
   const [form, setForm] = useState({ firstName: '', lastName: '', nickname: '', email: '', password: '' });
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const register = useAuthStore((s) => s.register);
-  const login = useAuthStore((s) => s.login);
-  const navigate = useNavigate();
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
@@ -22,20 +21,22 @@ export const RegisterPage = () => {
     if (form.password.length < 6) { setError('Пароль должен быть не короче 6 символов'); return; }
     setLoading(true);
     try {
-      await register(form);
-      try {
-        await login(form.email, form.password);
-        toast.success('Добро пожаловать в NextSound!');
-        navigate('/');
-      } catch {
-        navigate('/login');
-      }
-    } catch {
-      setError('Не удалось зарегистрироваться. Возможно, email уже занят');
+      const res = await register(form);
+      setPendingEmail(res.email || form.email);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Не удалось зарегистрироваться. Возможно, email уже занят');
     } finally {
       setLoading(false);
     }
   };
+
+  if (pendingEmail) {
+    return (
+      <AuthShell>
+        <VerifyForm email={pendingEmail} onBack={() => setPendingEmail(null)} />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell>

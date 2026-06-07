@@ -8,7 +8,9 @@ interface AuthState {
   isLoading: boolean;
   setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: Parameters<typeof authApi.register>[0]) => Promise<void>;
+  register: (data: Parameters<typeof authApi.register>[0]) => Promise<{ needVerification: boolean; email: string }>;
+  verify: (email: string, code: string) => Promise<void>;
+  resend: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
   updateProfile: (data: UpdateProfileDto) => Promise<void>;
@@ -24,7 +26,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: res.data.result.user });
   },
   register: async (data) => {
-    await authApi.register(data);
+    const res = await authApi.register(data);
+    return res.data;
+  },
+  verify: async (email, code) => {
+    const res = await authApi.verify(email, code);
+    set({ user: res.data.result.user });
+  },
+  resend: async (email) => {
+    await authApi.resend(email);
   },
   logout: async () => {
     await authApi.logout();

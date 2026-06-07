@@ -7,6 +7,7 @@ export interface User {
   role: 'listener' | 'artist' | 'admin';
   avatar?: string;
   bio?: string;
+  isVerified?: boolean;
   created_at: string;
   updated_at: string;
 }
