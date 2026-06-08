@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, AtSign, ArrowRight, LoaderCircle } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { AuthShell, AuthInput } from '../components/AuthShell';
@@ -12,6 +12,8 @@ export const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const register = useAuthStore((s) => s.register);
+  const login = useAuthStore((s) => s.login);
+  const navigate = useNavigate();
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
@@ -22,7 +24,12 @@ export const RegisterPage = () => {
     setLoading(true);
     try {
       const res = await register(form);
-      setPendingEmail(res.email || form.email);
+      if (res.needVerification) {
+        setPendingEmail(res.email || form.email);
+      } else {
+        await login(form.email, form.password);
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Не удалось зарегистрироваться. Возможно, email уже занят');
     } finally {
