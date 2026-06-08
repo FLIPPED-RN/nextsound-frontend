@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, Heart, BadgeCheck, UserPlus, Check, BarChart3, Camera, Pencil, X } from 'lucide-react';
+import { Play, Pause, Heart, BadgeCheck, UserPlus, Check, BarChart3, Camera, Pencil, X, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usersApi } from '../api/users.api';
 import { tracksApi } from '../api/tracks.api';
@@ -19,8 +19,13 @@ export const ArtistPage = () => {
   const qc = useQueryClient();
   const userId = Number(id);
 
-  const { user: me, uploadAvatar } = useAuthStore();
+  const { user: me, uploadAvatar, logout } = useAuthStore();
   const isOwn = me?.id === userId;
+
+  const handleLogout = async () => {
+    try { await logout(); } catch { }
+    navigate('/login');
+  };
 
   const { data: artist } = useQuery({
     queryKey: ['artist', userId],
@@ -169,6 +174,11 @@ export const ArtistPage = () => {
           <button onClick={handlePlayAll} className="flex-1 sm:flex-none sm:min-w-[160px] h-10 rounded-full text-sm font-semibold border border-[#242424] flex items-center justify-center gap-2 hover:border-white/50 transition">
             <Play size={16} /> Слушать всё
           </button>
+          {isOwn && (
+            <button onClick={handleLogout} title="Выйти" className="w-10 h-10 rounded-full border border-[#242424] flex items-center justify-center text-[#888] hover:text-red-400 hover:border-red-400/50 transition shrink-0">
+              <LogOut size={16} />
+            </button>
+          )}
         </div>
       </div>
 
