@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Music, Play, Heart, MessageCircle, ListMusic, HardDrive,
-  Trash2, ShieldCheck, Search, TrendingUp, BadgeCheck,
+  Trash2, ShieldCheck, Search, TrendingUp, BadgeCheck, Star,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminApi } from '../api/admin.api';
@@ -161,6 +161,15 @@ const TracksTab = () => {
     } catch { toast.error('Не удалось удалить'); }
   };
 
+  const toggleFeatured = async (t: Track) => {
+    try {
+      await adminApi.setFeatured(t.id, !t.isFeatured);
+      toast.success(!t.isFeatured ? 'Трек в «Рекомендуем»' : 'Убрано из рекомендаций');
+      qc.invalidateQueries({ queryKey: ['admin-tracks'] });
+      qc.invalidateQueries({ queryKey: ['tracks'] });
+    } catch { toast.error('Не удалось'); }
+  };
+
   const list = (tracks || []).filter((t) =>
     !q || t.title.toLowerCase().includes(q.toLowerCase()) ||
     (t.user?.nickname || t.user?.firstName || '').toLowerCase().includes(q.toLowerCase()));
@@ -191,6 +200,9 @@ const TracksTab = () => {
               <span className={`px-1.5 py-0.5 rounded text-[10px] ${t.visibility === 'public' ? 'bg-green-500/15 text-green-400' : 'bg-[#222] text-[#999]'}`}>{t.visibility}</span>
               <span className="w-20 text-right">{formatDate(t.created_at)}</span>
             </div>
+            <button onClick={() => toggleFeatured(t)} title="Рекомендуем" className={`p-2 transition shrink-0 ${t.isFeatured ? 'text-yellow-400' : 'text-[#666] hover:text-yellow-400'}`}>
+              <Star size={16} className={t.isFeatured ? 'fill-yellow-400' : ''} />
+            </button>
             <button onClick={() => del(t)} className="p-2 text-[#666] hover:text-red-400 transition shrink-0"><Trash2 size={16} /></button>
           </div>
         ))}

@@ -17,6 +17,8 @@ export const adminApi = {
   getStats: () => apiClient.get<AdminStats>('/admin/stats'),
   getTracks: () => apiClient.get<Track[]>('/admin/tracks'),
   deleteTrack: (id: number) => apiClient.delete(`/admin/tracks/${id}`),
+  setFeatured: (id: number, featured: boolean) =>
+    apiClient.patch(`/admin/tracks/${id}/featured`, { featured }),
   getUsers: () => apiClient.get<AdminUser[]>('/admin/users'),
   setRole: (id: number, role: string) => apiClient.patch<User>(`/admin/users/${id}/role`, { role }),
   setArtistVerified: (id: number, verified: boolean) =>

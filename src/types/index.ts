@@ -34,6 +34,7 @@ export interface Track {
   user: User;
   plays_count: number;
   size?: number;
+  isFeatured?: boolean;
   created_at: string;
   updated_at: string;
 }

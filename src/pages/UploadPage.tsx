@@ -8,6 +8,8 @@ import { useAuthStore } from '../store/auth.store';
 
 type Visibility = 'public' | 'private' | 'link';
 
+const GENRES = ['Хип-хоп', 'Рэп', 'Поп', 'Рок', 'Электроника', 'Хаус', 'Техно', 'R&B', 'Джаз', 'Фонк', 'Лоу-фай', 'Инди', 'Метал', 'Классика', 'Транс', 'Дрилл'];
+
 export const UploadPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -130,6 +132,18 @@ export const UploadPage = () => {
             </Field>
             <Field label="Жанр">
               <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Например, хип-хоп" className="ns-input" />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {GENRES.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGenre(g)}
+                    className={`text-xs px-2.5 py-1 rounded-full transition ${genre === g ? 'bg-white text-black' : 'bg-[#151515] text-[#aaa] hover:bg-[#222]'}`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
             </Field>
             <Field label="Темп">
               <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="напр. 128" className="ns-input" />

@@ -66,7 +66,7 @@ export const DiscoverPage = () => {
   });
   const { setTrack } = usePlayerStore();
 
-  const featured = tracks?.[0];
+  const featured = tracks?.find((t) => t.isFeatured) || tracks?.[0];
   const popular = useMemo(() => (tracks ? [...tracks].sort((a, b) => b.plays_count - a.plays_count) : []), [tracks]);
 
   const newArtists = useMemo(() => {
