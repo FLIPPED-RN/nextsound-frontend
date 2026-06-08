@@ -19,6 +19,8 @@ export const adminApi = {
   deleteTrack: (id: number) => apiClient.delete(`/admin/tracks/${id}`),
   getUsers: () => apiClient.get<AdminUser[]>('/admin/users'),
   setRole: (id: number, role: string) => apiClient.patch<User>(`/admin/users/${id}/role`, { role }),
+  setArtistVerified: (id: number, verified: boolean) =>
+    apiClient.patch<User>(`/admin/users/${id}/artist-verified`, { verified }),
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
   getComments: () => apiClient.get<Comment[]>('/admin/comments'),
   deleteComment: (id: number) => apiClient.delete(`/admin/comments/${id}`),

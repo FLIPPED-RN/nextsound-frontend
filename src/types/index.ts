@@ -8,6 +8,7 @@ export interface User {
   avatar?: string;
   bio?: string;
   isVerified?: boolean;
+  isArtistVerified?: boolean;
   created_at: string;
   updated_at: string;
 }

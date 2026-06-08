@@ -94,7 +94,7 @@ export const ArtistPage = () => {
   const name = displayArtist.nickname || `${displayArtist.firstName} ${displayArtist.lastName}`;
   const totalPlays = (tracks || []).reduce((s, t) => s + (t.plays_count || 0), 0);
   const trackCount = tracks?.length || 0;
-  const isVerified = displayArtist.role === 'artist' || displayArtist.role === 'admin';
+  const isVerified = !!displayArtist.isArtistVerified;
   const banner = displayArtist.avatar
     ? resolveAssetUrl(displayArtist.avatar)
     : (tracks?.[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '');

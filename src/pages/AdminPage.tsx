@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Music, Play, Heart, MessageCircle, ListMusic, HardDrive,
-  Trash2, ShieldCheck, Search, TrendingUp,
+  Trash2, ShieldCheck, Search, TrendingUp, BadgeCheck,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminApi } from '../api/admin.api';
@@ -226,21 +226,41 @@ const UsersTab = () => {
     } catch { toast.error('Не удалось удалить'); }
   };
 
+  const changeVerified = async (u: AdminUser, verified: boolean) => {
+    try {
+      await adminApi.setArtistVerified(u.id, verified);
+      toast.success(verified ? 'Артист подтверждён' : 'Подтверждение снято');
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+    } catch { toast.error('Не удалось'); }
+  };
+
   if (isLoading) return <div className="space-y-2">{Array(6).fill(0).map((_, i) => <div key={i} className="h-14 bg-[#0e0e0e] rounded-lg animate-pulse" />)}</div>;
 
   return (
     <div className="space-y-1">
       {(users || []).map((u) => (
-        <div key={u.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5">
+        <div key={u.id} className="flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-lg hover:bg-white/5">
           <button onClick={() => navigate(`/artist/${u.id}`)} className="shrink-0">
             {u.avatar ? <img src={resolveAssetUrl(u.avatar)} className="w-10 h-10 rounded-full object-cover" /> :
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-sm font-bold">{(u.nickname || u.firstName || '?')[0]?.toUpperCase()}</div>}
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate">{u.nickname || `${u.firstName} ${u.lastName}`}</p>
+            <p className="text-sm font-medium truncate flex items-center gap-1">
+              {u.nickname || `${u.firstName} ${u.lastName}`}
+              {u.isArtistVerified && <BadgeCheck size={14} className="text-blue-400 shrink-0" />}
+            </p>
             <p className="text-xs text-[#666] truncate">{u.email} · {u.trackCount} треков</p>
           </div>
-          <select value={u.role} onChange={(e) => changeRole(u, e.target.value)} className="bg-[#0e0e0e] border border-[#1f1f1f] rounded-lg text-xs px-2 py-1.5 outline-none focus:border-violet-500/60 shrink-0">
+          <select
+            value={u.isArtistVerified ? '1' : '0'}
+            onChange={(e) => changeVerified(u, e.target.value === '1')}
+            title="Подтверждённый артист"
+            className="bg-[#0e0e0e] border border-[#1f1f1f] rounded-lg text-xs px-2 py-1.5 outline-none focus:border-violet-500/60 shrink-0"
+          >
+            <option value="0">Не подтверждён</option>
+            <option value="1">✓ Артист</option>
+          </select>
+          <select value={u.role} onChange={(e) => changeRole(u, e.target.value)} title="Роль" className="bg-[#0e0e0e] border border-[#1f1f1f] rounded-lg text-xs px-2 py-1.5 outline-none focus:border-violet-500/60 shrink-0 hidden sm:block">
             {Object.entries(ROLE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
           <button onClick={() => del(u)} className="p-2 text-[#666] hover:text-red-400 transition shrink-0"><Trash2 size={16} /></button>
