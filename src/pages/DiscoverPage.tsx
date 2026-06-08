@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
 import { TrackCard } from '@/components/TrackCard';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 import type { Track, User } from '@/types';
@@ -46,7 +47,10 @@ const NewArtists = ({ artists }: { artists: { user: User; count: number }[] }) =
                 {(user.nickname || user.firstName || '?')[0]?.toUpperCase()}
               </div>
             )}
-            <p className="text-sm font-medium truncate w-full mt-2">{user.nickname || user.firstName}</p>
+            <p className="text-sm font-medium truncate w-full mt-2 flex items-center justify-center gap-1">
+              <span className="truncate">{user.nickname || user.firstName}</span>
+              <VerifiedBadge verified={user.isArtistVerified} size={13} />
+            </p>
             <p className="text-xs text-[#666]">{count} {count === 1 ? 'трек' : 'треков'}</p>
           </button>
         ))}
@@ -93,7 +97,11 @@ export const DiscoverPage = () => {
             <div className="min-w-0">
               <span className="text-xs tracking-widest text-violet-300 uppercase">Рекомендуем</span>
               <h1 className="text-3xl md:text-5xl font-extrabold mt-2 truncate">{featured.title}</h1>
-              <p className="text-sm text-[#bbb] mt-2">{featured.user?.nickname || featured.user?.firstName} · {formatCount(featured.plays_count)} прослушиваний</p>
+              <p className="text-sm text-[#bbb] mt-2 flex items-center gap-1">
+                <span>{featured.user?.nickname || featured.user?.firstName}</span>
+                <VerifiedBadge verified={featured.user?.isArtistVerified} />
+                <span>· {formatCount(featured.plays_count)} прослушиваний</span>
+              </p>
               <button
                 onClick={() => setTrack(featured, tracks || [])}
                 className="mt-5 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition"

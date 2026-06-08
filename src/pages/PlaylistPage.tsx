@@ -7,6 +7,7 @@ import { playlistsApi } from '../api/playlists.api';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatDate } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
+import { VerifiedBadge } from '../components/VerifiedBadge';
 import type { Playlist, Track } from '@/types';
 
 const extractTracks = (data: any): Track[] =>
@@ -253,7 +254,10 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
                   <img src={resolveAssetUrl(t.cover_path)} alt="" onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515] shrink-0" />
                   <div className="min-w-0">
                     <ScrollingText text={t.title} className={`text-sm font-medium ${isCurrent ? 'text-white' : ''}`} />
-                    <p className="text-xs text-[#666] truncate">{t.user?.nickname || t.user?.firstName}</p>
+                    <p className="text-xs text-[#666] truncate flex items-center gap-1">
+                      <span className="truncate">{t.user?.nickname || t.user?.firstName}</span>
+                      <VerifiedBadge verified={t.user?.isArtistVerified} size={12} />
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">

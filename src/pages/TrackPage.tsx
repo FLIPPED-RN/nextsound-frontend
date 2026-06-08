@@ -12,6 +12,7 @@ import { playlistsApi } from '../api/playlists.api';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { Waveform } from '../components/Waveform';
+import { VerifiedBadge } from '../components/VerifiedBadge';
 import { resolveAssetUrl, formatCount, formatTime, formatDate, timeAgo } from '@/lib/utils';
 import type { Comment, Track } from '@/types';
 
@@ -25,21 +26,17 @@ const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: string; la
 
 const CommentRow = ({ c, nested }: { c: Comment; nested?: boolean }) => {
   const name = c.user?.nickname || c.user?.firstName || 'User';
-  const isArtist = c.user?.role === 'artist';
+  const avatar = resolveAssetUrl(c.user?.avatar);
   return (
     <div className={`flex gap-3 ${nested ? 'ml-11 mt-3' : ''}`}>
       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
-        {name[0]?.toUpperCase()}
+        {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : name[0]?.toUpperCase()}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-sm font-semibold">{name}</span>
-          {isArtist && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-medium">
-              Артист
-            </span>
-          )}
-          <span className="text-xs text-[#666]">{timeAgo(c.created_at)}</span>
+          <VerifiedBadge verified={c.user?.isArtistVerified} size={13} />
+          <span className="text-xs text-[#666] ml-1">{timeAgo(c.created_at)}</span>
         </div>
         <p className="text-sm text-[#c9c9c9] mt-1 break-words">{c.text}</p>
       </div>
@@ -236,10 +233,13 @@ export const TrackPage = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight break-words">{track.title}</h1>
           <button onClick={() => navigate(`/artist/${track.userId}`)} className="flex items-center gap-2 mt-4 group">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-[10px] font-bold">
-              {artistName[0]?.toUpperCase()}
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-[11px] font-bold overflow-hidden shrink-0">
+              {track.user?.avatar
+                ? <img src={resolveAssetUrl(track.user.avatar)} alt="" className="w-full h-full object-cover" />
+                : artistName[0]?.toUpperCase()}
             </div>
             <span className="text-sm font-medium group-hover:underline">{artistName}</span>
+            <VerifiedBadge verified={track.user?.isArtistVerified} />
             <span className="text-sm text-[#666]">·</span>
             <span className="text-sm text-[#666]">{year}</span>
           </button>

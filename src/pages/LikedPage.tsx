@@ -5,6 +5,7 @@ import { tracksApi } from '../api/tracks.api';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
+import { VerifiedBadge } from '../components/VerifiedBadge';
 
 export const LikedPage = () => {
   const navigate = useNavigate();
@@ -59,7 +60,10 @@ export const LikedPage = () => {
                   <img src={resolveAssetUrl(t.cover_path)} alt="" onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515] shrink-0" />
                   <div className="min-w-0">
                     <ScrollingText text={t.title} className={`text-sm font-medium ${isCurrent ? 'text-white' : ''}`} />
-                    <p className="text-xs text-[#666] truncate">{t.user?.nickname || t.user?.firstName}</p>
+                    <p className="text-xs text-[#666] truncate flex items-center gap-1">
+                      <span className="truncate">{t.user?.nickname || t.user?.firstName}</span>
+                      <VerifiedBadge verified={t.user?.isArtistVerified} size={12} />
+                    </p>
                   </div>
                 </div>
                 <span className="text-xs text-[#666] pr-2">{formatCount(t.plays_count)}</span>
