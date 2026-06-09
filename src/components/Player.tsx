@@ -52,7 +52,7 @@ export const Player = () => {
       tracksApi
         .getLikes(currentTrack.id)
         .then((res) => {
-          setLiked(res.data.count > 0);
+          setLiked(res.data.liked);
         })
         .catch(() => {});
     }

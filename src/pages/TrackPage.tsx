@@ -127,7 +127,7 @@ export const TrackPage = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setLikeCount(likeData?.count ?? 0); setLiked((likeData?.count ?? 0) > 0); }, [likeData]);
+  useEffect(() => { setLikeCount(likeData?.count ?? 0); setLiked(likeData?.liked ?? false); }, [likeData]);
 
   const { data: repostData } = useQuery({
     queryKey: ['track-repost', trackId],
