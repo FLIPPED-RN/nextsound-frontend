@@ -38,7 +38,7 @@ export const TrackCard = ({ track }: { track: Track }) => {
       <div>
         <ScrollingText text={track.title} className="font-semibold" />
         <p className="text-sm text-[#888888] truncate flex items-center gap-1">
-          <span className="truncate">{track.user?.nickname || track.user?.firstName}</span>
+          <span className="truncate">{track.user?.nickname || track.user?.firstName}{track.featuring ? ` feat. ${track.featuring}` : ''}</span>
           <VerifiedBadge verified={track.user?.isArtistVerified} size={13} />
         </p>
         <p className="text-xs text-[#888888] mt-1">{track.plays_count} прослушиваний</p>

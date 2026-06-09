@@ -318,6 +318,7 @@ export const TrackPage = () => {
             </div>
             <span className="text-sm font-medium group-hover:underline">{artistName}</span>
             <VerifiedBadge verified={track.user?.isArtistVerified} />
+            {track.featuring && <span className="text-sm text-[#888]">feat. {track.featuring}</span>}
             <span className="text-sm text-[#666]">·</span>
             <span className="text-sm text-[#666]">{year}</span>
           </button>
@@ -463,6 +464,7 @@ const EditTrackModal = ({ track, onClose, onSaved }: { track: Track; onClose: ()
     title: track.title || '',
     description: track.description || '',
     genre: track.genre || '',
+    featuring: track.featuring || '',
     bpm: track.bpm ? String(track.bpm) : '',
     visibility: track.visibility || 'public',
   });
@@ -477,6 +479,7 @@ const EditTrackModal = ({ track, onClose, onSaved }: { track: Track; onClose: ()
         title: form.title.trim(),
         description: form.description,
         genre: form.genre,
+        featuring: form.featuring.trim(),
         bpm: form.bpm ? Number(form.bpm) : 0,
         visibility: form.visibility as Track['visibility'],
       });
@@ -499,6 +502,10 @@ const EditTrackModal = ({ track, onClose, onSaved }: { track: Track; onClose: ()
         <label className="block">
           <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Название</span>
           <input className="ns-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        </label>
+        <label className="block">
+          <span className="block text-xs tracking-widest text-[#666] uppercase mb-2">Совместно с (фит)</span>
+          <input className="ns-input" value={form.featuring} onChange={(e) => setForm({ ...form, featuring: e.target.value })} placeholder="Например, Markul" />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block">

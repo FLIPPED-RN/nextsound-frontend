@@ -25,6 +25,7 @@ export interface Track {
   title: string;
   description?: string;
   genre?: string;
+  featuring?: string;
   bpm?: number;
   file_path: string;
   cover_path?: string;
@@ -85,6 +86,7 @@ export interface CreateTrackDto {
   title: string;
   description?: string;
   genre?: string;
+  featuring?: string;
   bpm?: number;
   visibility?: 'public' | 'private' | 'link';
 }

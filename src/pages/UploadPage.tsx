@@ -16,6 +16,7 @@ export const UploadPage = () => {
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
+  const [featuring, setFeaturing] = useState('');
   const [bpm, setBpm] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -55,6 +56,7 @@ export const UploadPage = () => {
     form.append('title', title.trim());
     form.append('description', description);
     form.append('genre', genre);
+    if (featuring.trim()) form.append('featuring', featuring.trim());
     if (bpm) form.append('bpm', bpm);
     form.append('visibility', visibility);
     if (!publishNow && releaseDate) form.append('release_date', releaseDate);
@@ -149,6 +151,9 @@ export const UploadPage = () => {
               <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="напр. 128" className="ns-input" />
             </Field>
           </div>
+          <Field label="Совместно с (фит)">
+            <input value={featuring} onChange={(e) => setFeaturing(e.target.value)} placeholder="Например, Oxxxymiron, Markul" className="ns-input" />
+          </Field>
           <Field label="Описание">
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Расскажите о треке..." className="ns-input resize-none h-24" />
           </Field>
