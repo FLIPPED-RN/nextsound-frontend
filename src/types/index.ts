@@ -45,6 +45,9 @@ export interface Comment {
   userId: number;
   user: User;
   trackId: number;
+  parentId?: number | null;
+  likesCount?: number;
+  likedByMe?: boolean;
   created_at: string;
 }
 

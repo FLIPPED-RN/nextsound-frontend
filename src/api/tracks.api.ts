@@ -17,6 +17,9 @@ export const tracksApi = {
   incrementPlay: (id: number) => apiClient.post(`/tracks/${id}/play`),
   toggleLike: (id: number) => apiClient.post<{ liked: boolean }>(`/tracks/${id}/like`),
   getLikes: (id: number) => apiClient.get<{ count: number }>(`/tracks/${id}/likes`),
+  toggleRepost: (id: number) => apiClient.post<{ reposted: boolean }>(`/tracks/${id}/repost`),
+  getRepostInfo: (id: number) => apiClient.get<{ count: number; reposted: boolean }>(`/tracks/${id}/repost-info`),
+  getReposts: (userId: number) => apiClient.get<Track[]>(`/tracks/user/${userId}/reposts`),
   getLiked: () => apiClient.get<{ track: Track }[]>('/tracks/liked'),
   getByUser: (userId: number) => apiClient.get<Track[]>(`/tracks/user/${userId}`),
 };

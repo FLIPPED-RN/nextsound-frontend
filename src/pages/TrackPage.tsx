@@ -24,11 +24,29 @@ const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: string; la
   </span>
 );
 
-const CommentRow = ({ c, nested }: { c: Comment; nested?: boolean }) => {
+const CommentRow = ({ c, replies, canReply, onLike, onReply }: {
+  c: Comment;
+  replies?: Comment[];
+  canReply?: boolean;
+  onLike: (id: number) => void;
+  onReply: (parentId: number, text: string) => Promise<void>;
+}) => {
+  const [showReply, setShowReply] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
   const name = c.user?.nickname || c.user?.firstName || 'User';
   const avatar = resolveAssetUrl(c.user?.avatar);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    setSending(true);
+    try { await onReply(c.id, replyText.trim()); setReplyText(''); setShowReply(false); }
+    finally { setSending(false); }
+  };
+
   return (
-    <div className={`flex gap-3 ${nested ? 'ml-11 mt-3' : ''}`}>
+    <div className="flex gap-3">
       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
         {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : name[0]?.toUpperCase()}
       </div>
@@ -39,6 +57,36 @@ const CommentRow = ({ c, nested }: { c: Comment; nested?: boolean }) => {
           <span className="text-xs text-[#666] ml-1">{timeAgo(c.created_at)}</span>
         </div>
         <p className="text-sm text-[#c9c9c9] mt-1 break-words">{c.text}</p>
+
+        <div className="flex items-center gap-4 mt-1.5 text-xs">
+          <button onClick={() => onLike(c.id)} className={`inline-flex items-center gap-1 transition ${c.likedByMe ? 'text-red-400' : 'text-[#777] hover:text-white'}`}>
+            <Heart size={13} className={c.likedByMe ? 'fill-red-500 text-red-500' : ''} /> {c.likesCount || 0}
+          </button>
+          {canReply && (
+            <button onClick={() => setShowReply((s) => !s)} className="text-[#777] hover:text-white transition">Ответить</button>
+          )}
+        </div>
+
+        {showReply && (
+          <form onSubmit={submit} className="flex items-center gap-2 mt-2">
+            <input
+              autoFocus
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Ваш ответ..."
+              className="flex-1 bg-[#151515] rounded-full px-3 py-1.5 text-sm outline-none"
+            />
+            <button type="submit" disabled={sending} className="px-3 py-1.5 rounded-full bg-white text-black text-xs font-semibold disabled:opacity-60">Отправить</button>
+          </form>
+        )}
+
+        {!!replies?.length && (
+          <div className="mt-3 space-y-3 border-l border-[#1f1f1f] pl-3">
+            {replies.map((r) => (
+              <CommentRow key={r.id} c={r} onLike={onLike} onReply={onReply} canReply={false} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -70,6 +118,7 @@ export const TrackPage = () => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [reposted, setReposted] = useState(false);
+  const [repostCount, setRepostCount] = useState(0);
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -79,6 +128,33 @@ export const TrackPage = () => {
   const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setLikeCount(likeData?.count ?? 0); setLiked((likeData?.count ?? 0) > 0); }, [likeData]);
+
+  const { data: repostData } = useQuery({
+    queryKey: ['track-repost', trackId],
+    queryFn: () => tracksApi.getRepostInfo(trackId).then((r) => r.data),
+  });
+  useEffect(() => { if (repostData) { setReposted(repostData.reposted); setRepostCount(repostData.count); } }, [repostData]);
+
+  const handleRepost = async () => {
+    if (!user) { toast.error('Войдите, чтобы делать репост'); return; }
+    const was = reposted;
+    setReposted(!was);
+    setRepostCount((c) => c + (was ? -1 : 1));
+    try { await tracksApi.toggleRepost(trackId); }
+    catch { setReposted(was); setRepostCount((c) => c + (was ? 1 : -1)); }
+  };
+
+  const likeComment = async (commentId: number) => {
+    if (!user) { toast.error('Войдите, чтобы лайкать'); return; }
+    try { await commentsApi.like(trackId, commentId); refetchComments(); }
+    catch { toast.error('Не удалось'); }
+  };
+
+  const replyComment = async (parentId: number, text: string) => {
+    if (!user) { toast.error('Войдите, чтобы отвечать'); return; }
+    await commentsApi.create(trackId, text, parentId);
+    refetchComments();
+  };
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -177,7 +253,9 @@ export const TrackPage = () => {
 
   const tags = (track.genre || '').split(/[\s,/]+/).filter(Boolean).slice(0, 4);
   const commentsCount = comments?.length ?? 0;
-  const visibleComments = showAll ? comments : comments?.slice(0, 5);
+  const topLevel = (comments || []).filter((c) => !c.parentId).sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+  const repliesOf = (id: number) => (comments || []).filter((c) => c.parentId === id).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+  const visibleTop = showAll ? topLevel : topLevel.slice(0, 5);
 
   return (
     <div className="px-4 md:px-8 py-4 md:py-6 max-w-5xl mx-auto">
@@ -248,6 +326,7 @@ export const TrackPage = () => {
             <Stat icon={<Play size={14} />} value={formatCount(track.plays_count)} label="прослушиваний" />
             <Stat icon={<Heart size={14} />} value={formatCount(likeCount)} label="лайков" />
             <Stat icon={<MessageCircle size={14} />} value={formatCount(commentsCount)} label="комментария" />
+            <Stat icon={<Repeat2 size={14} />} value={formatCount(repostCount)} label="репостов" />
           </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-6">
@@ -274,8 +353,8 @@ export const TrackPage = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => setReposted((r) => !r)} className={`px-5 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition ${reposted ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-[#242424] hover:border-white/50'}`}>
-              <Repeat2 size={16} /> Репост
+            <button onClick={handleRepost} className={`px-5 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition ${reposted ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-[#242424] hover:border-white/50'}`}>
+              <Repeat2 size={16} /> {reposted ? 'Репостнуто' : 'Репост'}
             </button>
           </div>
         </div>
@@ -351,11 +430,13 @@ export const TrackPage = () => {
         </form>
 
         <div className="space-y-5">
-          {visibleComments?.map((c) => <CommentRow key={c.id} c={c} />)}
-          {!comments?.length && <p className="text-sm text-[#666]">Пока нет комментариев. Будьте первым!</p>}
+          {visibleTop.map((c) => (
+            <CommentRow key={c.id} c={c} replies={repliesOf(c.id)} canReply onLike={likeComment} onReply={replyComment} />
+          ))}
+          {!topLevel.length && <p className="text-sm text-[#666]">Пока нет комментариев. Будьте первым!</p>}
         </div>
 
-        {comments && comments.length > 5 && !showAll && (
+        {topLevel.length > 5 && !showAll && (
           <div className="flex justify-center mt-6">
             <button onClick={() => setShowAll(true)} className="px-5 py-2 rounded-full bg-[#151515] text-sm text-[#aaa] hover:bg-[#1f1f1f] transition">
               Показать ещё

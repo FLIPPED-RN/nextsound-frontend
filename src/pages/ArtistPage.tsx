@@ -38,11 +38,36 @@ export const ArtistPage = () => {
 
   const { setTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
   const [sort, setSort] = useState<Sort>('popular');
+  const [tab, setTab] = useState<'tracks' | 'reposts'>('tracks');
   const [following, setFollowing] = useState(false);
+  const [followers, setFollowers] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInput = useRef<HTMLInputElement>(null);
+
+  const { data: followInfo } = useQuery({
+    queryKey: ['follow-info', userId],
+    queryFn: () => usersApi.getFollowInfo(userId).then((r) => r.data),
+  });
+  useEffect(() => {
+    if (followInfo) { setFollowing(followInfo.isFollowing); setFollowers(followInfo.followers); }
+  }, [followInfo]);
+
+  const { data: reposts } = useQuery({
+    queryKey: ['reposts', userId],
+    queryFn: () => tracksApi.getReposts(userId).then((r) => r.data),
+    enabled: tab === 'reposts',
+  });
+
+  const handleFollow = async () => {
+    if (!me) { toast.error('Войдите, чтобы подписаться'); return; }
+    const was = following;
+    setFollowing(!was);
+    setFollowers((c) => c + (was ? -1 : 1));
+    try { await usersApi.follow(userId); }
+    catch { setFollowing(was); setFollowers((c) => c + (was ? 1 : -1)); }
+  };
 
   const sorted = useMemo(() => {
     const list = [...(tracks || [])];
@@ -154,6 +179,7 @@ export const ArtistPage = () => {
 
       <div className="px-4 md:px-8 mt-5 flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#8a8a8a]">
+          <span><span className="text-white font-semibold">{formatNumber(followers)}</span> подписчиков</span>
           <span><span className="text-white font-semibold">{trackCount}</span> {trackCount === 1 ? 'трек' : 'треков'}</span>
           <span><span className="text-white font-semibold">{formatCount(totalPlays)}</span> прослушиваний</span>
           <span>с <span className="text-white font-semibold">{memberSince}</span></span>
@@ -165,7 +191,7 @@ export const ArtistPage = () => {
             </button>
           ) : (
             <button
-              onClick={() => setFollowing((f) => !f)}
+              onClick={handleFollow}
               className={`flex-1 sm:flex-none sm:min-w-[160px] h-10 rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition ${following ? 'bg-[#222] text-white border border-[#333]' : 'bg-white text-black hover:opacity-90'}`}
             >
               {following ? <><Check size={16} /> Вы подписаны</> : <><UserPlus size={16} /> Подписаться</>}
@@ -184,40 +210,61 @@ export const ArtistPage = () => {
 
       <div className="px-4 md:px-8 mt-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <h2 className="text-2xl font-bold">Треки</h2>
-          <div className="flex items-center gap-1 text-sm flex-wrap">
-            <span className="text-[#666] mr-1 hidden sm:inline">Сортировка:</span>
-            {(['popular', 'latest', 'oldest'] as Sort[]).map((s) => (
-              <button key={s} onClick={() => setSort(s)} className={`px-3 py-1 rounded-full transition ${sort === s ? 'bg-white/10 text-white font-semibold' : 'text-[#888] hover:text-white'}`}>
-                {({ popular: 'Популярные', latest: 'Новые', oldest: 'Старые' } as Record<Sort, string>)[s]}
-              </button>
-            ))}
+          <div className="flex items-center gap-4">
+            <button onClick={() => setTab('tracks')} className={`text-2xl font-bold transition ${tab === 'tracks' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Треки</button>
+            <button onClick={() => setTab('reposts')} className={`text-2xl font-bold transition ${tab === 'reposts' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Репосты</button>
           </div>
+          {tab === 'tracks' && (
+            <div className="flex items-center gap-1 text-sm flex-wrap">
+              <span className="text-[#666] mr-1 hidden sm:inline">Сортировка:</span>
+              {(['popular', 'latest', 'oldest'] as Sort[]).map((s) => (
+                <button key={s} onClick={() => setSort(s)} className={`px-3 py-1 rounded-full transition ${sort === s ? 'bg-white/10 text-white font-semibold' : 'text-[#888] hover:text-white'}`}>
+                  {({ popular: 'Популярные', latest: 'Новые', oldest: 'Старые' } as Record<Sort, string>)[s]}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="hidden md:grid grid-cols-[24px_1fr_120px_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
-          <span>#</span><span>Название</span><span className="text-right">Прослушивания</span><span className="text-right">Дата</span><span></span>
-        </div>
-
-        <div className="mt-1">
-          {visible.map((t, i) => (
-            <TrackRow key={t.id} t={t} index={i + 1}
-              isPlaying={currentTrack?.id === t.id && isPlaying}
-              isCurrent={currentTrack?.id === t.id}
-              liked={likedIds.has(t.id)}
-              onLike={() => toggleLike(t.id)}
-              onPlay={() => { if (currentTrack?.id === t.id) togglePlay(); else setTrack(t, sorted); }}
-              onOpen={() => navigate(`/track/${t.id}`)}
-            />
-          ))}
-          {!sorted.length && <p className="text-sm text-[#666] py-6">У артиста пока нет треков.</p>}
-        </div>
-
-        {sorted.length > 8 && (
-          <div className="flex justify-center mt-5">
-            <button onClick={() => setShowAll((s) => !s)} className="px-5 py-2 rounded-full bg-[#151515] text-sm text-[#aaa] hover:bg-[#1f1f1f] transition">
-              {showAll ? 'Свернуть' : `Показать все (${trackCount})`}
-            </button>
+        {tab === 'tracks' ? (
+          <>
+            <div className="hidden md:grid grid-cols-[24px_1fr_120px_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
+              <span>#</span><span>Название</span><span className="text-right">Прослушивания</span><span className="text-right">Дата</span><span></span>
+            </div>
+            <div className="mt-1">
+              {visible.map((t, i) => (
+                <TrackRow key={t.id} t={t} index={i + 1}
+                  isPlaying={currentTrack?.id === t.id && isPlaying}
+                  isCurrent={currentTrack?.id === t.id}
+                  liked={likedIds.has(t.id)}
+                  onLike={() => toggleLike(t.id)}
+                  onPlay={() => { if (currentTrack?.id === t.id) togglePlay(); else setTrack(t, sorted); }}
+                  onOpen={() => navigate(`/track/${t.id}`)}
+                />
+              ))}
+              {!sorted.length && <p className="text-sm text-[#666] py-6">У артиста пока нет треков.</p>}
+            </div>
+            {sorted.length > 8 && (
+              <div className="flex justify-center mt-5">
+                <button onClick={() => setShowAll((s) => !s)} className="px-5 py-2 rounded-full bg-[#151515] text-sm text-[#aaa] hover:bg-[#1f1f1f] transition">
+                  {showAll ? 'Свернуть' : `Показать все (${trackCount})`}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="mt-1">
+            {(reposts || []).map((t, i) => (
+              <TrackRow key={t.id} t={t} index={i + 1}
+                isPlaying={currentTrack?.id === t.id && isPlaying}
+                isCurrent={currentTrack?.id === t.id}
+                liked={likedIds.has(t.id)}
+                onLike={() => toggleLike(t.id)}
+                onPlay={() => { if (currentTrack?.id === t.id) togglePlay(); else setTrack(t, reposts || []); }}
+                onOpen={() => navigate(`/track/${t.id}`)}
+              />
+            ))}
+            {!reposts?.length && <p className="text-sm text-[#666] py-6">Пока нет репостов.</p>}
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Search, Upload, ListMusic, Heart, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl } from '../lib/utils';
+import { NotificationBell } from './NotificationBell';
 
 const links = [
   { to: '/', icon: Home, label: 'Главная' },
@@ -23,7 +24,8 @@ export const Sidebar = () => {
     <div className="flex flex-col h-full bg-[#111111] border-r border-[#242424] px-4 py-5">
       <div className='flex items-center mb-10'>
         <img src="/NextSoundLogo.png" alt="" className='w-12 h-12' />
-        <h1 className="text-2xl font-bold px-2">NextSound</h1>
+        <h1 className="text-2xl font-bold px-2 flex-1">NextSound</h1>
+        {user && <NotificationBell />}
       </div>
 
       <nav className="flex-1 space-y-1">

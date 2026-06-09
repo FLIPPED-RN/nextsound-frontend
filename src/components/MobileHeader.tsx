@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl } from '../lib/utils';
+import { NotificationBell } from './NotificationBell';
 
 export const MobileHeader = () => {
   const { user } = useAuthStore();
@@ -14,15 +15,18 @@ export const MobileHeader = () => {
       </button>
 
       {user ? (
-        <button onClick={() => navigate(`/artist/${user.id}`)} aria-label="Профиль">
-          {user.avatar ? (
-            <img src={resolveAssetUrl(user.avatar)} alt="" className="w-9 h-9 rounded-full object-cover" />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-sm font-bold">
-              {(user.nickname || user.firstName || '?')[0]?.toUpperCase()}
-            </div>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button onClick={() => navigate(`/artist/${user.id}`)} aria-label="Профиль">
+            {user.avatar ? (
+              <img src={resolveAssetUrl(user.avatar)} alt="" className="w-9 h-9 rounded-full object-cover" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-sm font-bold">
+                {(user.nickname || user.firstName || '?')[0]?.toUpperCase()}
+              </div>
+            )}
+          </button>
+        </div>
       ) : (
         <button onClick={() => navigate('/login')} className="text-sm font-medium px-3 py-1.5 rounded-full bg-white text-black">
           Войти
