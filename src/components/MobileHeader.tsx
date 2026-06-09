@@ -8,7 +8,7 @@ export const MobileHeader = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-black/80 backdrop-blur border-b border-[#1a1a1a]">
+    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-[#0b0b0b] border-b border-[#1a1a1a]">
       <button onClick={() => navigate('/')} className="flex items-center gap-2">
         <img src="/NextSoundLogo.png" alt="" className="w-8 h-8" />
         <span className="text-lg font-bold">NextSound</span>

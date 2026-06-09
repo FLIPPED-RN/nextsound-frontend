@@ -86,7 +86,7 @@ export const NotificationBell = () => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[88vw] max-h-[70vh] overflow-y-auto rounded-2xl bg-[#111] border border-[#242424] shadow-2xl z-50">
+        <div className="fixed left-3 top-[60px] w-[calc(100vw-1.5rem)] md:absolute md:left-0 md:top-full md:mt-2 md:w-80 max-h-[70vh] overflow-y-auto rounded-2xl bg-[#111] border border-[#242424] shadow-2xl z-[60]">
           <div className="px-4 py-3 border-b border-[#1f1f1f] text-sm font-semibold">Уведомления</div>
           {!list?.length ? (
             <p className="px-4 py-8 text-sm text-[#666] text-center">Пока нет уведомлений</p>
