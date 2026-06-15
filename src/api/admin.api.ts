@@ -13,6 +13,15 @@ export interface AdminStats {
 
 export type AdminUser = User & { trackCount: number };
 
+export interface AdminReport {
+  id: number;
+  trackId: number;
+  reason: string;
+  created_at: string;
+  track: Track | null;
+  reporter: User | null;
+}
+
 export const adminApi = {
   getStats: () => apiClient.get<AdminStats>('/admin/stats'),
   getTracks: () => apiClient.get<Track[]>('/admin/tracks'),
@@ -26,4 +35,6 @@ export const adminApi = {
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
   getComments: () => apiClient.get<Comment[]>('/admin/comments'),
   deleteComment: (id: number) => apiClient.delete(`/admin/comments/${id}`),
+  getReports: () => apiClient.get<AdminReport[]>('/admin/reports'),
+  dismissReport: (id: number) => apiClient.delete(`/admin/reports/${id}`),
 };

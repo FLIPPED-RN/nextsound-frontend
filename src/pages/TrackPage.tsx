@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import {
   Play, Pause, Heart, Share2, Repeat2, Plus, ChevronLeft,
-  MoreHorizontal, MessageCircle, Pencil, Trash2, X, Download,
+  MoreHorizontal, MessageCircle, Pencil, Trash2, X, Download, Flag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
@@ -140,6 +140,7 @@ export const TrackPage = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
@@ -306,7 +307,7 @@ export const TrackPage = () => {
                 <button onClick={handleShare} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/5 transition flex items-center gap-2">
                   <Share2 size={15} /> Поделиться
                 </button>
-                {isOwner && (
+                {isOwner ? (
                   <>
                     <button onClick={() => { setShowMenu(false); setEditing(true); }} className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-white/5 transition flex items-center gap-2">
                       <Pencil size={15} /> Редактировать
@@ -315,6 +316,13 @@ export const TrackPage = () => {
                       <Trash2 size={15} /> Удалить
                     </button>
                   </>
+                ) : (
+                  <button
+                    onClick={() => { setShowMenu(false); if (!user) { toast.error('Войдите, чтобы пожаловаться'); return; } setReportOpen(true); }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition flex items-center gap-2"
+                  >
+                    <Flag size={15} /> Пожаловаться
+                  </button>
                 )}
               </div>
             )}
@@ -507,6 +515,7 @@ export const TrackPage = () => {
         </div>
       )}
 
+      {reportOpen && <ReportModal trackId={track.id} onClose={() => setReportOpen(false)} />}
       {editing && <EditTrackModal track={track} onClose={() => setEditing(false)} onSaved={handleSaved} />}
       {confirmDelete && (
         <ConfirmModal
@@ -594,6 +603,55 @@ const EditTrackModal = ({ track, onClose, onSaved }: { track: Track; onClose: ()
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
           <button type="submit" disabled={saving} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black hover:opacity-90 transition disabled:opacity-60">
             {saving ? 'Сохранение...' : 'Сохранить'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const REPORT_REASONS = ['Нарушение авторских прав', 'Оскорбления / разжигание ненависти', 'Спам или мошенничество', 'Контент для взрослых', 'Другое'];
+
+const ReportModal = ({ trackId, onClose }: { trackId: number; onClose: () => void }) => {
+  const [reason, setReason] = useState(REPORT_REASONS[0]);
+  const [details, setDetails] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      const text = details.trim() ? `${reason}: ${details.trim()}` : reason;
+      await tracksApi.report(trackId, text);
+      toast.success('Жалоба отправлена. Спасибо!');
+      onClose();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Не удалось отправить');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-md bg-[#111] border border-[#242424] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold flex items-center gap-2"><Flag size={18} className="text-red-400" /> Пожаловаться на трек</h3>
+          <button type="button" onClick={onClose} className="text-[#666] hover:text-white transition"><X size={18} /></button>
+        </div>
+        <div className="space-y-2">
+          {REPORT_REASONS.map((r) => (
+            <label key={r} className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="radio" name="reason" checked={reason === r} onChange={() => setReason(r)} className="accent-violet-500" />
+              {r}
+            </label>
+          ))}
+        </div>
+        <textarea className="ns-input resize-none h-20" placeholder="Подробности (необязательно)" value={details} onChange={(e) => setDetails(e.target.value)} />
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
+          <button type="submit" disabled={sending} className="px-5 py-2 rounded-full text-sm font-semibold bg-red-500 hover:bg-red-400 transition disabled:opacity-60">
+            {sending ? 'Отправка...' : 'Отправить жалобу'}
           </button>
         </div>
       </form>

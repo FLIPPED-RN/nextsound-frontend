@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Music, Play, Heart, MessageCircle, ListMusic, HardDrive,
-  Trash2, ShieldCheck, Search, TrendingUp, BadgeCheck, Star,
+  Trash2, ShieldCheck, Search, TrendingUp, BadgeCheck, Star, Flag, Check,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminApi } from '../api/admin.api';
@@ -12,16 +12,18 @@ import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatNumber, formatCount, formatBytes, formatDate } from '@/lib/utils';
 import type { Track, Comment } from '@/types';
 
-type Tab = 'overview' | 'tracks' | 'users' | 'comments';
+type Tab = 'overview' | 'tracks' | 'users' | 'comments' | 'reports';
 
 export const AdminPage = () => {
   const [tab, setTab] = useState<Tab>('overview');
+  const { data: reports } = useQuery({ queryKey: ['admin-reports'], queryFn: () => adminApi.getReports().then((r) => r.data) });
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Обзор' },
     { id: 'tracks', label: 'Треки' },
     { id: 'users', label: 'Пользователи' },
     { id: 'comments', label: 'Комментарии' },
+    { id: 'reports', label: `Жалобы${reports?.length ? ` (${reports.length})` : ''}` },
   ];
 
   return (
@@ -52,6 +54,7 @@ export const AdminPage = () => {
       {tab === 'tracks' && <TracksTab />}
       {tab === 'users' && <UsersTab />}
       {tab === 'comments' && <CommentsTab />}
+      {tab === 'reports' && <ReportsTab />}
     </div>
   );
 };
@@ -317,6 +320,57 @@ const CommentsTab = () => {
         </div>
       ))}
       {!comments?.length && <p className="text-sm text-[#666] py-6 text-center">Комментариев нет.</p>}
+    </div>
+  );
+};
+
+const ReportsTab = () => {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { data: reports, isLoading } = useQuery({ queryKey: ['admin-reports'], queryFn: () => adminApi.getReports().then((r) => r.data) });
+
+  const dismiss = async (id: number) => {
+    try {
+      await adminApi.dismissReport(id);
+      toast.success('Жалоба закрыта');
+      qc.invalidateQueries({ queryKey: ['admin-reports'] });
+    } catch { toast.error('Не удалось'); }
+  };
+
+  const removeTrack = async (trackId: number) => {
+    if (!confirm('Удалить трек по жалобе? Файлы и все данные будут стёрты.')) return;
+    try {
+      await adminApi.deleteTrack(trackId);
+      toast.success('Трек удалён');
+      qc.invalidateQueries({ queryKey: ['admin-reports'] });
+      qc.invalidateQueries({ queryKey: ['admin-tracks'] });
+      qc.invalidateQueries({ queryKey: ['admin-stats'] });
+    } catch { toast.error('Не удалось удалить'); }
+  };
+
+  if (isLoading) return <div className="space-y-2">{Array(4).fill(0).map((_, i) => <div key={i} className="h-16 bg-[#0e0e0e] rounded-lg animate-pulse" />)}</div>;
+
+  return (
+    <div className="space-y-2">
+      {(reports || []).map((r) => (
+        <div key={r.id} className="flex items-start gap-3 px-3 py-3 rounded-lg bg-[#0e0e0e] border border-[#1a1a1a]">
+          <Flag size={16} className="text-red-400 shrink-0 mt-1" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              {r.track
+                ? <button onClick={() => navigate(`/track/${r.trackId}`)} className="text-sm font-medium text-violet-300 hover:underline truncate">{r.track.title}</button>
+                : <span className="text-sm text-[#666]">Трек удалён (#{r.trackId})</span>}
+              <span className="text-xs text-[#666]">от {r.reporter?.nickname || r.reporter?.firstName || 'аноним'} · {formatDate(r.created_at)}</span>
+            </div>
+            <p className="text-sm text-[#c9c9c9] mt-1 break-words">{r.reason}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {r.track && <button onClick={() => removeTrack(r.trackId)} title="Удалить трек" className="p-2 text-[#666] hover:text-red-400 transition"><Trash2 size={16} /></button>}
+            <button onClick={() => dismiss(r.id)} title="Закрыть жалобу" className="p-2 text-[#666] hover:text-green-400 transition"><Check size={16} /></button>
+          </div>
+        </div>
+      ))}
+      {!reports?.length && <p className="text-sm text-[#666] py-6 text-center">Жалоб нет.</p>}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, Heart, BadgeCheck, UserPlus, Check, BarChart3, Camera, Pencil, X, LogOut } from 'lucide-react';
+import { Play, Pause, Heart, BadgeCheck, UserPlus, Check, BarChart3, Camera, Pencil, X, LogOut, Link2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usersApi } from '../api/users.api';
 import { tracksApi } from '../api/tracks.api';
@@ -19,7 +19,7 @@ export const ArtistPage = () => {
   const qc = useQueryClient();
   const userId = Number(id);
 
-  const { user: me, uploadAvatar, logout } = useAuthStore();
+  const { user: me, uploadAvatar, uploadBanner, logout } = useAuthStore();
   const isOwn = me?.id === userId;
 
   const handleLogout = async () => {
@@ -44,7 +44,9 @@ export const ArtistPage = () => {
   const [showAll, setShowAll] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const bannerInput = useRef<HTMLInputElement>(null);
 
   const { data: followInfo } = useQuery({
     queryKey: ['follow-info', userId],
@@ -120,10 +122,21 @@ export const ArtistPage = () => {
   const totalPlays = (tracks || []).reduce((s, t) => s + (t.plays_count || 0), 0);
   const trackCount = tracks?.length || 0;
   const isVerified = !!displayArtist.isArtistVerified;
-  const banner = displayArtist.avatar
-    ? resolveAssetUrl(displayArtist.avatar)
-    : (tracks?.[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '');
+  const banner = displayArtist.banner
+    ? resolveAssetUrl(displayArtist.banner)
+    : (displayArtist.avatar
+      ? resolveAssetUrl(displayArtist.avatar)
+      : (tracks?.[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : ''));
   const memberSince = new Date(displayArtist.created_at).getFullYear() || new Date().getFullYear();
+
+  let socials: { key: string; label: string; url: string }[] = [];
+  try {
+    const parsed = displayArtist.links ? JSON.parse(displayArtist.links) : {};
+    const labels: Record<string, string> = { telegram: 'Telegram', instagram: 'Instagram', vk: 'VK', youtube: 'YouTube', website: 'Сайт' };
+    socials = Object.entries(labels)
+      .filter(([k]) => parsed[k]?.trim())
+      .map(([k, label]) => ({ key: k, label, url: parsed[k].trim() }));
+  } catch { socials = []; }
 
   const handlePlayAll = () => { if (sorted.length) setTrack(sorted[0], sorted); };
 
@@ -142,6 +155,21 @@ export const ArtistPage = () => {
     }
   };
 
+  const handleBannerPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBanner(true);
+    try {
+      await uploadBanner(file);
+      qc.invalidateQueries({ queryKey: ['artist', userId] });
+      toast.success('Обложка профиля обновлена');
+    } catch {
+      toast.error('Не удалось загрузить обложку');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   const visible = showAll ? sorted : sorted.slice(0, 8);
 
   return (
@@ -157,13 +185,23 @@ export const ArtistPage = () => {
         {isOwn && (
           <>
             <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={handleAvatarPick} />
-            <button
-              onClick={() => avatarInput.current?.click()}
-              disabled={uploadingAvatar}
-              className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 text-sm bg-black/50 backdrop-blur px-3 py-1.5 rounded-full hover:bg-black/70 transition disabled:opacity-60"
-            >
-              <Camera size={15} /> {uploadingAvatar ? 'Загрузка...' : 'Сменить фото'}
-            </button>
+            <input ref={bannerInput} type="file" accept="image/*" className="hidden" onChange={handleBannerPick} />
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              <button
+                onClick={() => bannerInput.current?.click()}
+                disabled={uploadingBanner}
+                className="inline-flex items-center gap-2 text-sm bg-black/50 backdrop-blur px-3 py-1.5 rounded-full hover:bg-black/70 transition disabled:opacity-60"
+              >
+                <Camera size={15} /> {uploadingBanner ? 'Загрузка...' : 'Обложка'}
+              </button>
+              <button
+                onClick={() => avatarInput.current?.click()}
+                disabled={uploadingAvatar}
+                className="inline-flex items-center gap-2 text-sm bg-black/50 backdrop-blur px-3 py-1.5 rounded-full hover:bg-black/70 transition disabled:opacity-60"
+              >
+                <Camera size={15} /> {uploadingAvatar ? 'Загрузка...' : 'Фото'}
+              </button>
+            </div>
           </>
         )}
 
@@ -207,6 +245,22 @@ export const ArtistPage = () => {
           )}
         </div>
       </div>
+
+      {socials.length > 0 && (
+        <div className="px-4 md:px-8 mt-4 flex flex-wrap gap-2">
+          {socials.map((s) => (
+            <a
+              key={s.key}
+              href={s.url.startsWith('http') ? s.url : `https://${s.url}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#151515] text-[#bbb] hover:bg-[#1f1f1f] hover:text-white transition"
+            >
+              <Link2 size={13} /> {s.label}
+            </a>
+          ))}
+        </div>
+      )}
 
       <div className="px-4 md:px-8 mt-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
@@ -308,6 +362,14 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
     nickname: user?.nickname || '',
     bio: user?.bio || '',
   });
+  const parsedLinks = (() => { try { return user?.links ? JSON.parse(user.links) : {}; } catch { return {}; } })();
+  const [links, setLinks] = useState({
+    telegram: parsedLinks.telegram || '',
+    instagram: parsedLinks.instagram || '',
+    vk: parsedLinks.vk || '',
+    youtube: parsedLinks.youtube || '',
+    website: parsedLinks.website || '',
+  });
   const [saving, setSaving] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [pwd, setPwd] = useState({ oldPassword: '', newPassword: '' });
@@ -317,7 +379,8 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateProfile(form);
+      const cleanLinks = Object.fromEntries(Object.entries(links).filter(([, v]) => (v as string).trim()));
+      await updateProfile({ ...form, links: JSON.stringify(cleanLinks) });
       toast.success('Профиль обновлён');
       onClose();
     } catch {
@@ -355,6 +418,17 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
         </div>
         <input className="ns-input" placeholder="Никнейм" value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
         <textarea className="ns-input resize-none h-28" placeholder="О себе" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+
+        <div className="border-t border-[#242424] pt-3 space-y-2">
+          <span className="block text-xs tracking-widest text-[#666] uppercase">Ссылки</span>
+          <input className="ns-input" placeholder="Telegram (https://t.me/...)" value={links.telegram} onChange={(e) => setLinks({ ...links, telegram: e.target.value })} />
+          <input className="ns-input" placeholder="Instagram" value={links.instagram} onChange={(e) => setLinks({ ...links, instagram: e.target.value })} />
+          <div className="grid grid-cols-2 gap-2">
+            <input className="ns-input" placeholder="VK" value={links.vk} onChange={(e) => setLinks({ ...links, vk: e.target.value })} />
+            <input className="ns-input" placeholder="YouTube" value={links.youtube} onChange={(e) => setLinks({ ...links, youtube: e.target.value })} />
+          </div>
+          <input className="ns-input" placeholder="Свой сайт" value={links.website} onChange={(e) => setLinks({ ...links, website: e.target.value })} />
+        </div>
 
         <div className="border-t border-[#242424] pt-3">
           <button type="button" onClick={() => setShowPwd((s) => !s)} className="text-sm text-[#aaa] hover:text-white transition">

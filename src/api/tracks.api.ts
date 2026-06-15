@@ -25,4 +25,5 @@ export const tracksApi = {
   getTrending: () => apiClient.get<Track[]>('/tracks/trending'),
   getSimilar: (id: number) => apiClient.get<Track[]>(`/tracks/${id}/similar`),
   getHistory: () => apiClient.get<Track[]>('/tracks/history'),
+  report: (id: number, reason: string) => apiClient.post(`/tracks/${id}/report`, { reason }),
 };

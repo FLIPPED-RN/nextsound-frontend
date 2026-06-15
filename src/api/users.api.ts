@@ -16,4 +16,11 @@ export const usersApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  uploadBanner: (file: File) => {
+    const form = new FormData();
+    form.append('banner', file);
+    return apiClient.post<User>('/users/me/banner', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

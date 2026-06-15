@@ -6,6 +6,8 @@ export interface User {
   email: string;
   role: 'listener' | 'artist' | 'admin';
   avatar?: string;
+  banner?: string;
+  links?: string;
   bio?: string;
   isVerified?: boolean;
   isArtistVerified?: boolean;
@@ -13,11 +15,20 @@ export interface User {
   updated_at: string;
 }
 
+export interface SocialLinks {
+  telegram?: string;
+  instagram?: string;
+  vk?: string;
+  youtube?: string;
+  website?: string;
+}
+
 export interface UpdateProfileDto {
   firstName?: string;
   lastName?: string;
   nickname?: string;
   bio?: string;
+  links?: string;
 }
 
 export interface Track {
