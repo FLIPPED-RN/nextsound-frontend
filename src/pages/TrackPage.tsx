@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import {
   Play, Pause, Heart, Share2, Repeat2, Plus, ChevronLeft,
-  MoreHorizontal, MessageCircle, Pencil, Trash2, X,
+  MoreHorizontal, MessageCircle, Pencil, Trash2, X, Download,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
@@ -190,6 +190,7 @@ export const TrackPage = () => {
   const isThisPlaying = isActive && isPlaying;
   const audioUrl = resolveAssetUrl(track.file_path);
   const cover = resolveAssetUrl(track.cover_path);
+  const downloadUrl = `${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/tracks/${track.id}/download`;
   const artistName = track.user?.nickname || track.user?.firstName || 'Unknown';
   const year = new Date(track.release_date || track.created_at).getFullYear();
   const trackDuration = isActive && duration ? duration : 0;
@@ -357,6 +358,9 @@ export const TrackPage = () => {
             <button onClick={handleRepost} className={`px-5 py-2.5 rounded-full border text-sm font-medium flex items-center gap-2 transition ${reposted ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-[#242424] hover:border-white/50'}`}>
               <Repeat2 size={16} /> {reposted ? 'Репостнуто' : 'Репост'}
             </button>
+            <a href={downloadUrl} className="px-5 py-2.5 rounded-full border border-[#242424] text-sm font-medium flex items-center gap-2 hover:border-white/50 transition">
+              <Download size={16} /> Скачать
+            </a>
           </div>
         </div>
       </div>
