@@ -33,16 +33,12 @@ export function getImageAccent(url: string): Promise<[number, number, number] | 
           if (sat < 25) continue;
           r += rr; g += gg; b += bb; n++;
         }
-        if (n < 5) {
-          r = g = b = 0; n = 0;
-          for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
-        }
-        if (!n) { resolve(null); return; }
+        if (n < 5) { resolve(null); return; }
         resolve([Math.round(r / n), Math.round(g / n), Math.round(b / n)]);
       } catch { resolve(null); }
     };
     img.onerror = () => resolve(null);
-    img.src = url;
+    img.src = url + (url.includes("?") ? "&" : "?") + "cors=1";
   });
 }
 
