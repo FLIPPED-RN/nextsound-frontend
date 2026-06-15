@@ -4,6 +4,23 @@
   font-family: 'Inter', sans-serif;
 }
 
+button:not(:disabled),
+[role="button"],
+select,
+label[for],
+summary,
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+input[type="file"],
+a {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 html,
 body,
 #root {
