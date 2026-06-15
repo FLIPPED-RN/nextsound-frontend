@@ -13,7 +13,8 @@ import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { Waveform } from '../components/Waveform';
 import { VerifiedBadge } from '../components/VerifiedBadge';
-import { resolveAssetUrl, formatCount, formatTime, formatDate, timeAgo } from '@/lib/utils';
+import { TrackCard } from '../components/TrackCard';
+import { resolveAssetUrl, formatCount, formatTime, formatDate, timeAgo, getImageAccent, buildWaveGradient } from '@/lib/utils';
 import type { Comment, Track } from '@/types';
 
 const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) => (
@@ -24,12 +25,13 @@ const Stat = ({ icon, value, label }: { icon: React.ReactNode; value: string; la
   </span>
 );
 
-const CommentRow = ({ c, replies, canReply, onLike, onReply }: {
+const CommentRow = ({ c, replies, canReply, onLike, onReply, onSeekTo }: {
   c: Comment;
   replies?: Comment[];
   canReply?: boolean;
   onLike: (id: number) => void;
   onReply: (parentId: number, text: string) => Promise<void>;
+  onSeekTo?: (t: number) => void;
 }) => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -55,6 +57,14 @@ const CommentRow = ({ c, replies, canReply, onLike, onReply }: {
           <span className="text-sm font-semibold">{name}</span>
           <VerifiedBadge verified={c.user?.isArtistVerified} size={13} />
           <span className="text-xs text-[#666] ml-1">{timeAgo(c.created_at)}</span>
+          {c.timestamp != null && (
+            <button
+              onClick={() => onSeekTo?.(c.timestamp || 0)}
+              className="ml-1 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 hover:bg-violet-500/25 transition"
+            >
+              <Play size={9} className="fill-violet-300" /> {formatTime(c.timestamp)}
+            </button>
+          )}
         </div>
         <p className="text-sm text-[#c9c9c9] mt-1 break-words">{c.text}</p>
 
@@ -109,12 +119,18 @@ export const TrackPage = () => {
     queryKey: ['track-likes', trackId],
     queryFn: () => tracksApi.getLikes(trackId).then((r) => r.data),
   });
+  const { data: similar } = useQuery({
+    queryKey: ['similar', trackId],
+    queryFn: () => tracksApi.getSimilar(trackId).then((r) => r.data),
+  });
 
   const { user } = useAuthStore();
   const qc = useQueryClient();
   const { currentTrack, isPlaying, progress, duration, setTrack, togglePlay, seekTo, queue } = usePlayerStore();
 
   const [commentText, setCommentText] = useState('');
+  const [attachTime, setAttachTime] = useState(false);
+  const [waveGradient, setWaveGradient] = useState<string[] | undefined>(undefined);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [reposted, setReposted] = useState(false);
@@ -128,6 +144,14 @@ export const TrackPage = () => {
   const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setLikeCount(likeData?.count ?? 0); setLiked(likeData?.liked ?? false); }, [likeData]);
+
+  useEffect(() => {
+    const url = resolveAssetUrl(track?.cover_path);
+    if (!url) { setWaveGradient(undefined); return; }
+    let alive = true;
+    getImageAccent(url).then((rgb) => { if (alive && rgb) setWaveGradient(buildWaveGradient(rgb)); });
+    return () => { alive = false; };
+  }, [track?.cover_path]);
 
   const { data: repostData } = useQuery({
     queryKey: ['track-repost', trackId],
@@ -247,8 +271,10 @@ export const TrackPage = () => {
     e.preventDefault();
     if (!commentText.trim()) return;
     if (!user) { toast.error('Войдите, чтобы комментировать'); return; }
-    await commentsApi.create(trackId, commentText.trim());
+    const at = currentTrack?.id === track?.id ? progress : 0;
+    await commentsApi.create(trackId, commentText.trim(), undefined, attachTime ? Math.floor(at) : undefined);
     setCommentText('');
+    setAttachTime(false);
     refetchComments();
   };
 
@@ -375,6 +401,8 @@ export const TrackPage = () => {
             audioUrl={audioUrl}
             isPlaying={isActive && isPlaying}
             currentTime={isActive ? progress : 0}
+            progressGradient={waveGradient}
+            comments={comments}
             onPlay={() => { }}
             onPause={() => { }}
             onReady={() => { }}
@@ -417,26 +445,44 @@ export const TrackPage = () => {
           <span className="text-xs text-[#666]">Сортировка: <span className="text-white">Новые</span></span>
         </div>
 
-        <form onSubmit={handleComment} className="flex items-center gap-3 mb-6">
+        <form onSubmit={handleComment} className="flex items-start gap-3 mb-6">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-xs font-bold shrink-0">
             {(user?.firstName?.[0] || '?').toUpperCase()}
           </div>
-          <div className="flex-1 flex items-center gap-2 bg-[#151515] rounded-full pr-2 focus-within:ring-1 ring-white/20">
-            <input
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Напишите комментарий..."
-              className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none"
-            />
-            <button type="submit" className="px-4 py-1.5 rounded-full bg-white text-black text-sm font-semibold hover:opacity-90 transition">
-              Отправить
+          <div className="flex-1">
+            <div className="flex items-center gap-2 bg-[#151515] rounded-full pr-2 focus-within:ring-1 ring-white/20">
+              <input
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder={attachTime ? `Комментарий к ${formatTime(currentTrack?.id === track.id ? progress : 0)}...` : 'Напишите комментарий...'}
+                className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none"
+              />
+              <button type="submit" className="px-4 py-1.5 rounded-full bg-white text-black text-sm font-semibold hover:opacity-90 transition">
+                Отправить
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAttachTime((s) => !s)}
+              className={`mt-2 inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition ${attachTime ? 'border-violet-500/60 bg-violet-500/10 text-violet-300' : 'border-[#242424] text-[#888] hover:border-white/40'}`}
+            >
+              <MessageCircle size={12} />
+              {attachTime ? `Привязано к ${formatTime(currentTrack?.id === track.id ? progress : 0)}` : 'Привязать к моменту трека'}
             </button>
           </div>
         </form>
 
         <div className="space-y-5">
           {visibleTop.map((c) => (
-            <CommentRow key={c.id} c={c} replies={repliesOf(c.id)} canReply onLike={likeComment} onReply={replyComment} />
+            <CommentRow
+              key={c.id}
+              c={c}
+              replies={repliesOf(c.id)}
+              canReply
+              onLike={likeComment}
+              onReply={replyComment}
+              onSeekTo={(t) => { if (!isActive) setTrack(track, queue.length ? queue : [track]); seekTo(t); }}
+            />
           ))}
           {!topLevel.length && <p className="text-sm text-[#666]">Пока нет комментариев. Будьте первым!</p>}
         </div>
@@ -449,6 +495,17 @@ export const TrackPage = () => {
           </div>
         )}
       </div>
+
+      {!!similar?.length && (
+        <div className="mt-12">
+          <h3 className="text-xl font-bold mb-5">Похожие треки</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {similar.slice(0, 10).map((t) => (
+              <TrackCard key={t.id} track={t} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {editing && <EditTrackModal track={track} onClose={() => setEditing(false)} onSaved={handleSaved} />}
       {confirmDelete && (

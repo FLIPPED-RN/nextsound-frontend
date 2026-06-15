@@ -309,6 +309,9 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
     bio: user?.bio || '',
   });
   const [saving, setSaving] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwd, setPwd] = useState({ oldPassword: '', newPassword: '' });
+  const [pwdSaving, setPwdSaving] = useState(false);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,6 +324,21 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
       toast.error('Не удалось сохранить');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const savePwd = async () => {
+    if (pwd.newPassword.length < 6) { toast.error('Новый пароль не короче 6 символов'); return; }
+    setPwdSaving(true);
+    try {
+      await usersApi.changePassword(pwd.oldPassword, pwd.newPassword);
+      toast.success('Пароль изменён');
+      setPwd({ oldPassword: '', newPassword: '' });
+      setShowPwd(false);
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Не удалось изменить пароль');
+    } finally {
+      setPwdSaving(false);
     }
   };
 
@@ -337,6 +355,22 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
         </div>
         <input className="ns-input" placeholder="Никнейм" value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
         <textarea className="ns-input resize-none h-28" placeholder="О себе" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+
+        <div className="border-t border-[#242424] pt-3">
+          <button type="button" onClick={() => setShowPwd((s) => !s)} className="text-sm text-[#aaa] hover:text-white transition">
+            {showPwd ? '× Отменить смену пароля' : 'Сменить пароль'}
+          </button>
+          {showPwd && (
+            <div className="space-y-3 mt-3">
+              <input type="password" className="ns-input" placeholder="Текущий пароль" value={pwd.oldPassword} onChange={(e) => setPwd({ ...pwd, oldPassword: e.target.value })} />
+              <input type="password" className="ns-input" placeholder="Новый пароль (мин. 6 символов)" value={pwd.newPassword} onChange={(e) => setPwd({ ...pwd, newPassword: e.target.value })} />
+              <button type="button" onClick={savePwd} disabled={pwdSaving} className="px-4 py-2 rounded-full text-sm font-semibold bg-violet-600 hover:bg-violet-500 transition disabled:opacity-60">
+                {pwdSaving ? 'Сохранение...' : 'Обновить пароль'}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-sm text-[#aaa] hover:text-white transition">Отмена</button>
           <button type="submit" disabled={saving} className="px-5 py-2 rounded-full text-sm font-semibold bg-white text-black hover:opacity-90 transition disabled:opacity-60">

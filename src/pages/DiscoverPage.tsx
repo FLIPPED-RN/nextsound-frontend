@@ -6,6 +6,7 @@ import { tracksApi } from '../api/tracks.api';
 import { TrackCard } from '@/components/TrackCard';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { usePlayerStore } from '../store/player.store';
+import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 import type { Track, User } from '@/types';
 
@@ -60,9 +61,19 @@ const NewArtists = ({ artists }: { artists: { user: User; count: number }[] }) =
 };
 
 export const DiscoverPage = () => {
+  const { user } = useAuthStore();
   const { data: tracks, isLoading } = useQuery({
     queryKey: ['tracks'],
     queryFn: () => tracksApi.getAll().then((r) => r.data),
+  });
+  const { data: trending, isLoading: trendingLoading } = useQuery({
+    queryKey: ['trending'],
+    queryFn: () => tracksApi.getTrending().then((r) => r.data),
+  });
+  const { data: history } = useQuery({
+    queryKey: ['history'],
+    queryFn: () => tracksApi.getHistory().then((r) => r.data),
+    enabled: !!user,
   });
   const { setTrack } = usePlayerStore();
 
@@ -113,6 +124,8 @@ export const DiscoverPage = () => {
         </div>
       )}
 
+      {!!trending?.length && <Section title="🔥 В тренде за неделю" tracks={trending} loading={trendingLoading} />}
+      {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       <NewArtists artists={newArtists} />
       <Section title="Новое" tracks={tracks} loading={isLoading} />
       <Section title="Популярное" tracks={popular} loading={isLoading} />

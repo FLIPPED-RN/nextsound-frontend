@@ -13,6 +13,48 @@ export function resolveAssetUrl(path?: string | null): string {
   return `${base}/${clean.replace(/^\//, "")}`;
 }
 
+export function getImageAccent(url: string): Promise<[number, number, number] | null> {
+  return new Promise((resolve) => {
+    if (!url) { resolve(null); return; }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const size = 24;
+        const c = document.createElement("canvas");
+        c.width = size; c.height = size;
+        const ctx = c.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, size, size);
+        const d = ctx.getImageData(0, 0, size, size).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const rr = d[i], gg = d[i + 1], bb = d[i + 2];
+          const sat = Math.max(rr, gg, bb) - Math.min(rr, gg, bb);
+          if (sat < 25) continue;
+          r += rr; g += gg; b += bb; n++;
+        }
+        if (n < 5) {
+          r = g = b = 0; n = 0;
+          for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+        }
+        if (!n) { resolve(null); return; }
+        resolve([Math.round(r / n), Math.round(g / n), Math.round(b / n)]);
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+export function buildWaveGradient(rgb: [number, number, number]): string[] {
+  const [r, g, b] = rgb;
+  const lighten = (f: number) =>
+    `rgb(${Math.min(255, Math.round(r + (255 - r) * f))},${Math.min(255, Math.round(g + (255 - g) * f))},${Math.min(255, Math.round(b + (255 - b) * f))})`;
+  const darken = (f: number) =>
+    `rgb(${Math.round(r * (1 - f))},${Math.round(g * (1 - f))},${Math.round(b * (1 - f))})`;
+  return [lighten(0.5), `rgb(${r},${g},${b})`, darken(0.3)];
+}
+
 export function formatCount(n?: number): string {
   const v = n ?? 0;
   if (v < 1000) return String(v);

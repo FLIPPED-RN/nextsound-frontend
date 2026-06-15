@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, UserPlus, Repeat2, MessageCircle, Heart, CornerDownRight } from 'lucide-react';
+import { Bell, UserPlus, Repeat2, MessageCircle, Heart, CornerDownRight, Music } from 'lucide-react';
 import { notificationsApi } from '../api/notifications.api';
 import type { AppNotification } from '../api/notifications.api';
 import { useAuthStore } from '../store/auth.store';
@@ -14,6 +14,7 @@ const ICON: Record<string, React.ReactNode> = {
   reply: <CornerDownRight size={13} className="text-blue-400" />,
   comment_like: <Heart size={13} className="text-red-400" />,
   track_like: <Heart size={13} className="text-red-400" />,
+  new_track: <Music size={13} className="text-violet-400" />,
 };
 
 const text = (n: AppNotification) => {
@@ -26,6 +27,7 @@ const text = (n: AppNotification) => {
     case 'reply': return `${name} ответил на ваш комментарий`;
     case 'comment_like': return `${name} оценил ваш комментарий`;
     case 'track_like': return `${name} лайкнул ${t}`;
+    case 'new_track': return `${name} выпустил новый трек ${t}`;
     default: return name;
   }
 };

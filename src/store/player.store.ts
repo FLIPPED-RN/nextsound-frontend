@@ -15,6 +15,7 @@ interface PlayerState {
   duration: number;
 
   audio: HTMLAudioElement | null;
+  analyser: AnalyserNode | null;
 
   setTrack: (track: Track, queue?: Track[]) => void;
   togglePlay: () => void;
@@ -33,6 +34,29 @@ interface PlayerState {
 
 const getAudioUrl = (path?: string) => resolveAssetUrl(path);
 
+let audioCtx: AudioContext | null = null;
+let analyserNode: AnalyserNode | null = null;
+
+const connectAnalyser = (audio: HTMLAudioElement) => {
+  try {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+      analyserNode = audioCtx.createAnalyser();
+      analyserNode.fftSize = 128;
+      analyserNode.smoothingTimeConstant = 0.8;
+      analyserNode.connect(audioCtx.destination);
+    }
+    const source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyserNode!);
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return analyserNode;
+  } catch {
+    return analyserNode;
+  }
+};
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrack: null,
   queue: [],
@@ -45,6 +69,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   duration: 0,
 
   audio: null,
+  analyser: null,
 
   setPlayerExpanded: (value) =>
     set({ isPlayerExpanded: value }),
@@ -61,9 +86,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     if (!url) return;
 
-    const audio = new Audio(url);
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.src = url;
 
     audio.volume = get().volume;
+
+    const analyser = connectAnalyser(audio);
 
     audio.onloadedmetadata = () => {
       set({ duration: audio.duration });
@@ -86,6 +115,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       queue,
       isPlaying: true,
       audio,
+      analyser,
       progress: 0,
     });
   },
@@ -98,6 +128,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (isPlaying) {
       audio.pause();
     } else {
+      if (audioCtx?.state === 'suspended') audioCtx.resume();
       audio.play();
     }
 

@@ -22,4 +22,7 @@ export const tracksApi = {
   getReposts: (userId: number) => apiClient.get<Track[]>(`/tracks/user/${userId}/reposts`),
   getLiked: () => apiClient.get<{ track: Track }[]>('/tracks/liked'),
   getByUser: (userId: number) => apiClient.get<Track[]>(`/tracks/user/${userId}`),
+  getTrending: () => apiClient.get<Track[]>('/tracks/trending'),
+  getSimilar: (id: number) => apiClient.get<Track[]>(`/tracks/${id}/similar`),
+  getHistory: () => apiClient.get<Track[]>('/tracks/history'),
 };

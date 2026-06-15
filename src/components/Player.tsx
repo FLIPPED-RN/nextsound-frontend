@@ -18,6 +18,40 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useAuthStore } from '../store/auth.store';
 
+const Visualizer = ({ analyser, isPlaying, color = '#a855f7' }: { analyser: AnalyserNode | null; isPlaying: boolean; color?: string }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !analyser) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let raf = 0;
+    const draw = () => {
+      raf = requestAnimationFrame(draw);
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      if (!isPlaying) return;
+      analyser.getByteFrequencyData(data);
+      const bars = 28;
+      const step = Math.floor(data.length / bars);
+      const bw = w / bars;
+      for (let i = 0; i < bars; i++) {
+        const v = data[i * step] / 255;
+        const bh = Math.max(2, v * h);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.35 + v * 0.65;
+        ctx.fillRect(i * bw + 1, h - bh, bw - 2, bh);
+      }
+      ctx.globalAlpha = 1;
+    };
+    draw();
+    return () => cancelAnimationFrame(raf);
+  }, [analyser, isPlaying, color]);
+  if (!analyser) return null;
+  return <canvas ref={canvasRef} width={120} height={32} className="hidden md:block h-8 w-[120px] opacity-90" />;
+};
+
 export const Player = () => {
   const {
     currentTrack,
@@ -35,6 +69,7 @@ export const Player = () => {
 
     isPlayerExpanded,
     setPlayerExpanded,
+    analyser,
   } = usePlayerStore();
 
   const { user } = useAuthStore();
@@ -362,7 +397,8 @@ export const Player = () => {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-2 w-1/4 justify-end">
+        <div className="hidden md:flex items-center gap-3 w-1/4 justify-end">
+          <Visualizer analyser={analyser} isPlaying={isPlaying} />
           <Volume2 size={18} />
 
           <input
