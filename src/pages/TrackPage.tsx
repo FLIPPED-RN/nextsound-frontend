@@ -415,7 +415,10 @@ export const TrackPage = () => {
             onPause={() => { }}
             onReady={() => { }}
             onTimeUpdate={() => { }}
-            onSeek={(t) => { if (!isActive) setTrack(track, queue.length ? queue : [track]); seekTo(t); }}
+            onSeek={(t) => {
+              if (usePlayerStore.getState().currentTrack?.id !== track.id) setTrack(track, queue.length ? queue : [track]);
+              seekTo(t);
+            }}
           />
         )}
       </div>
@@ -489,7 +492,10 @@ export const TrackPage = () => {
               canReply
               onLike={likeComment}
               onReply={replyComment}
-              onSeekTo={(t) => { if (!isActive) setTrack(track, queue.length ? queue : [track]); seekTo(t); }}
+              onSeekTo={(t) => {
+                if (usePlayerStore.getState().currentTrack?.id !== track.id) setTrack(track, queue.length ? queue : [track]);
+                seekTo(t);
+              }}
             />
           ))}
           {!topLevel.length && <p className="text-sm text-[#666]">Пока нет комментариев. Будьте первым!</p>}

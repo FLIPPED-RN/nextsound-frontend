@@ -14,6 +14,7 @@ import { RecommendationsPage } from '../pages/RecommendationsPage';
 import { useAuthStore } from '../store/auth.store';
 import { PlaylistPage } from '@/pages/PlaylistPage';
 import { AdminPage } from '../pages/AdminPage';
+import { AlbumPage } from '../pages/AlbumPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuthStore();
@@ -41,6 +42,7 @@ export const AppRouter = () => (
       <Route index element={<DiscoverPage />} />
       <Route path="discover" element={<DiscoverPage />} />
       <Route path="track/:id" element={<TrackPage />} />
+      <Route path="album/:id" element={<AlbumPage />} />
       <Route path="artist/:id" element={<ArtistPage />} />
       <Route path="search" element={<SearchPage />} />
       <Route path="upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />

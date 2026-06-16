@@ -43,6 +43,7 @@ export interface Track {
   visibility: 'public' | 'private' | 'link';
   release_date: string;
   userId: number;
+  albumId?: number | null;
   user: User;
   plays_count: number;
   size?: number;
@@ -62,6 +63,18 @@ export interface Comment {
   likesCount?: number;
   likedByMe?: boolean;
   created_at: string;
+}
+
+export interface Album {
+  id: number;
+  title: string;
+  cover_path?: string | null;
+  userId: number;
+  user?: User;
+  created_at: string;
+  trackCount?: number;
+  tracks?: Track[];
+  plays?: number;
 }
 
 export interface Playlist {

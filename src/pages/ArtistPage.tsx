@@ -5,6 +5,7 @@ import { Play, Pause, Heart, BadgeCheck, UserPlus, Check, BarChart3, Camera, Pen
 import toast from 'react-hot-toast';
 import { usersApi } from '../api/users.api';
 import { tracksApi } from '../api/tracks.api';
+import { albumsApi } from '../api/albums.api';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
@@ -38,7 +39,7 @@ export const ArtistPage = () => {
 
   const { setTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
   const [sort, setSort] = useState<Sort>('popular');
-  const [tab, setTab] = useState<'tracks' | 'reposts'>('tracks');
+  const [tab, setTab] = useState<'tracks' | 'albums' | 'reposts'>('tracks');
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [showAll, setShowAll] = useState(false);
@@ -60,6 +61,11 @@ export const ArtistPage = () => {
     queryKey: ['reposts', userId],
     queryFn: () => tracksApi.getReposts(userId).then((r) => r.data),
     enabled: tab === 'reposts',
+  });
+
+  const { data: albums } = useQuery({
+    queryKey: ['albums', userId],
+    queryFn: () => albumsApi.getByUser(userId).then((r) => r.data),
   });
 
   const handleFollow = async () => {
@@ -266,6 +272,9 @@ export const ArtistPage = () => {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div className="flex items-center gap-4">
             <button onClick={() => setTab('tracks')} className={`text-2xl font-bold transition ${tab === 'tracks' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Треки</button>
+            {!!albums?.length && (
+              <button onClick={() => setTab('albums')} className={`text-2xl font-bold transition ${tab === 'albums' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Альбомы</button>
+            )}
             <button onClick={() => setTab('reposts')} className={`text-2xl font-bold transition ${tab === 'reposts' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Репосты</button>
           </div>
           {tab === 'tracks' && (
@@ -280,7 +289,7 @@ export const ArtistPage = () => {
           )}
         </div>
 
-        {tab === 'tracks' ? (
+        {tab === 'tracks' && (
           <>
             <div className="hidden md:grid grid-cols-[24px_1fr_120px_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
               <span>#</span><span>Название</span><span className="text-right">Прослушивания</span><span className="text-right">Дата</span><span></span>
@@ -306,7 +315,23 @@ export const ArtistPage = () => {
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {tab === 'albums' && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-1">
+            {(albums || []).map((a) => (
+              <button key={a.id} onClick={() => navigate(`/album/${a.id}`)} className="text-left group">
+                <div className="aspect-square rounded-xl overflow-hidden bg-[#151515]">
+                  <img src={resolveAssetUrl(a.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                </div>
+                <p className="text-sm font-medium truncate mt-2">{a.title}</p>
+                <p className="text-xs text-[#666]">{a.trackCount} {a.trackCount === 1 ? 'трек' : 'треков'}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {tab === 'reposts' && (
           <div className="mt-1">
             {(reposts || []).map((t, i) => (
               <TrackRow key={t.id} t={t} index={i + 1}

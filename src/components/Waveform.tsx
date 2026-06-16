@@ -42,6 +42,9 @@ export const Waveform = ({
     const [dur, setDur] = useState(0);
     const [hovered, setHovered] = useState<number | null>(null);
 
+    const cb = useRef({ onPlay, onPause, onReady, onTimeUpdate, onSeek });
+    cb.current = { onPlay, onPause, onReady, onTimeUpdate, onSeek };
+
     const progressKey = (progressGradient || DEFAULT_PROGRESS).join(',');
 
     useEffect(() => {
@@ -67,6 +70,7 @@ export const Waveform = ({
             height: HEIGHT,
             barGap: 2,
             normalize: true,
+            dragToSeek: true,
         });
 
         ws.load(audioUrl);
@@ -74,21 +78,21 @@ export const Waveform = ({
 
         ws.on('ready', () => {
             setDur(ws.getDuration());
-            onReady(ws.getDuration());
+            cb.current.onReady(ws.getDuration());
         });
 
         ws.on('timeupdate', (time) => {
-            if (!isSeeking.current) onTimeUpdate(time);
+            if (!isSeeking.current) cb.current.onTimeUpdate(time);
         });
 
         ws.on('interaction', (time) => {
             isSeeking.current = true;
-            onSeek(time);
+            cb.current.onSeek(time);
             setTimeout(() => { isSeeking.current = false; }, 100);
         });
 
-        ws.on('play', onPlay);
-        ws.on('pause', onPause);
+        ws.on('play', () => cb.current.onPlay());
+        ws.on('pause', () => cb.current.onPause());
 
         wavesurferRef.current = ws;
 

@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, Music, ImageIcon, X, Check, Lock, Globe, Link2 } from 'lucide-react';
+import { UploadCloud, Music, ImageIcon, X, Check, Lock, Globe, Link2, Disc3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
+import { albumsApi } from '../api/albums.api';
 import { useAuthStore } from '../store/auth.store';
 
 type Visibility = 'public' | 'private' | 'link';
@@ -27,6 +29,14 @@ export const UploadPage = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [albumChoice, setAlbumChoice] = useState('');
+  const [newAlbumTitle, setNewAlbumTitle] = useState('');
+
+  const { data: myAlbums } = useQuery({
+    queryKey: ['my-albums'],
+    queryFn: () => albumsApi.getMine().then((r) => r.data),
+    enabled: !!user,
+  });
 
   const onDropAudio = useCallback((files: File[]) => {
     if (files[0]) setAudioFile(files[0]);
@@ -51,18 +61,32 @@ export const UploadPage = () => {
     e.preventDefault();
     if (!audioFile) { toast.error('Добавьте аудиофайл'); return; }
     if (!title.trim()) { toast.error('Введите название трека'); return; }
+    if (albumChoice === 'new' && !newAlbumTitle.trim()) { toast.error('Введите название альбома'); return; }
     setUploading(true);
-    const form = new FormData();
-    form.append('title', title.trim());
-    form.append('description', description);
-    form.append('genre', genre);
-    if (featuring.trim()) form.append('featuring', featuring.trim());
-    if (bpm) form.append('bpm', bpm);
-    form.append('visibility', visibility);
-    if (!publishNow && releaseDate) form.append('release_date', releaseDate);
-    form.append('file', audioFile);
-    if (coverFile) form.append('cover', coverFile);
     try {
+      let albumId: number | undefined;
+      if (albumChoice === 'new') {
+        const af = new FormData();
+        af.append('title', newAlbumTitle.trim());
+        if (coverFile) af.append('cover', coverFile);
+        const albRes = await albumsApi.create(af);
+        albumId = albRes.data.id;
+      } else if (albumChoice) {
+        albumId = Number(albumChoice);
+      }
+
+      const form = new FormData();
+      form.append('title', title.trim());
+      form.append('description', description);
+      form.append('genre', genre);
+      if (featuring.trim()) form.append('featuring', featuring.trim());
+      if (bpm) form.append('bpm', bpm);
+      form.append('visibility', visibility);
+      if (!publishNow && releaseDate) form.append('release_date', releaseDate);
+      form.append('file', audioFile);
+      if (coverFile) form.append('cover', coverFile);
+      if (albumId) form.append('albumId', String(albumId));
+
       const res = await tracksApi.create(form);
       toast.success('Трек загружен!');
       navigate(`/track/${res.data.id}`);
@@ -179,6 +203,26 @@ export const UploadPage = () => {
               <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
             </label>
             <p className="text-xs text-[#666] mt-2">JPG, PNG или WEBP. Мин. 800×800</p>
+          </div>
+
+          <div>
+            <p className="text-xs tracking-widest text-[#666] uppercase mb-3 flex items-center gap-1.5"><Disc3 size={13} /> Альбом</p>
+            <select value={albumChoice} onChange={(e) => setAlbumChoice(e.target.value)} className="ns-input">
+              <option value="">Сингл (без альбома)</option>
+              {(myAlbums || []).map((a) => (
+                <option key={a.id} value={a.id}>{a.title}</option>
+              ))}
+              <option value="new">➕ Новый альбом…</option>
+            </select>
+            {albumChoice === 'new' && (
+              <input
+                value={newAlbumTitle}
+                onChange={(e) => setNewAlbumTitle(e.target.value)}
+                placeholder="Название альбома"
+                className="ns-input mt-2"
+              />
+            )}
+            <p className="text-xs text-[#666] mt-2">Загружайте треки в один альбом, чтобы собрать релиз.</p>
           </div>
 
           <div>
