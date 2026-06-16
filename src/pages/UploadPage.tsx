@@ -1,20 +1,24 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, Music, ImageIcon, X, Check, Lock, Globe, Link2, Disc3 } from 'lucide-react';
+import { UploadCloud, Music, ImageIcon, X, Check, Lock, Globe, Link2, Disc3, GripVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
 import { albumsApi } from '../api/albums.api';
 import { useAuthStore } from '../store/auth.store';
 
 type Visibility = 'public' | 'private' | 'link';
+type Mode = 'single' | 'album';
 
 const GENRES = ['Хип-хоп', 'Рэп', 'Поп', 'Рок', 'Электроника', 'Хаус', 'Техно', 'R&B', 'Джаз', 'Фонк', 'Лоу-фай', 'Инди', 'Метал', 'Классика', 'Транс', 'Дрилл'];
+
+const stripExt = (name: string) => name.replace(/\.[^.]+$/, '');
 
 export const UploadPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+
+  const [mode, setMode] = useState<Mode>('single');
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
@@ -26,26 +30,27 @@ export const UploadPage = () => {
   const [releaseDate, setReleaseDate] = useState('');
 
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [albumTitle, setAlbumTitle] = useState('');
+  const [albumTracks, setAlbumTracks] = useState<{ file: File; title: string }[]>([]);
+
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [albumChoice, setAlbumChoice] = useState('');
-  const [newAlbumTitle, setNewAlbumTitle] = useState('');
+  const [progressLabel, setProgressLabel] = useState('');
 
-  const { data: myAlbums } = useQuery({
-    queryKey: ['my-albums'],
-    queryFn: () => albumsApi.getMine().then((r) => r.data),
-    enabled: !!user,
-  });
-
-  const onDropAudio = useCallback((files: File[]) => {
-    if (files[0]) setAudioFile(files[0]);
-  }, []);
+  const onDrop = useCallback((files: File[]) => {
+    if (!files.length) return;
+    if (mode === 'album') {
+      setAlbumTracks((prev) => [...prev, ...files.map((f) => ({ file: f, title: stripExt(f.name) }))]);
+    } else {
+      setAudioFile(files[0]);
+    }
+  }, [mode]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: onDropAudio,
+    onDrop,
     accept: { 'audio/*': ['.mp3', '.wav', '.flac'] },
-    maxFiles: 1,
+    multiple: mode === 'album',
   });
 
   useEffect(() => () => { if (coverPreview) URL.revokeObjectURL(coverPreview); }, [coverPreview]);
@@ -57,24 +62,15 @@ export const UploadPage = () => {
     setCoverPreview(file ? URL.createObjectURL(file) : null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const setTrackTitle = (i: number, v: string) =>
+    setAlbumTracks((prev) => prev.map((t, idx) => (idx === i ? { ...t, title: v } : t)));
+  const removeTrack = (i: number) => setAlbumTracks((prev) => prev.filter((_, idx) => idx !== i));
+
+  const submitSingle = async () => {
     if (!audioFile) { toast.error('Добавьте аудиофайл'); return; }
     if (!title.trim()) { toast.error('Введите название трека'); return; }
-    if (albumChoice === 'new' && !newAlbumTitle.trim()) { toast.error('Введите название альбома'); return; }
     setUploading(true);
     try {
-      let albumId: number | undefined;
-      if (albumChoice === 'new') {
-        const af = new FormData();
-        af.append('title', newAlbumTitle.trim());
-        if (coverFile) af.append('cover', coverFile);
-        const albRes = await albumsApi.create(af);
-        albumId = albRes.data.id;
-      } else if (albumChoice) {
-        albumId = Number(albumChoice);
-      }
-
       const form = new FormData();
       form.append('title', title.trim());
       form.append('description', description);
@@ -85,17 +81,50 @@ export const UploadPage = () => {
       if (!publishNow && releaseDate) form.append('release_date', releaseDate);
       form.append('file', audioFile);
       if (coverFile) form.append('cover', coverFile);
-      if (albumId) form.append('albumId', String(albumId));
-
       const res = await tracksApi.create(form);
       toast.success('Трек загружен!');
       navigate(`/track/${res.data.id}`);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error('Ошибка загрузки');
     } finally {
       setUploading(false);
     }
+  };
+
+  const submitAlbum = async () => {
+    if (!albumTitle.trim()) { toast.error('Введите название альбома'); return; }
+    if (!albumTracks.length) { toast.error('Добавьте хотя бы один трек'); return; }
+    setUploading(true);
+    try {
+      const af = new FormData();
+      af.append('title', albumTitle.trim());
+      if (coverFile) af.append('cover', coverFile);
+      const alb = await albumsApi.create(af);
+
+      for (let i = 0; i < albumTracks.length; i++) {
+        const t = albumTracks[i];
+        setProgressLabel(`Загрузка трека ${i + 1} из ${albumTracks.length}…`);
+        const form = new FormData();
+        form.append('title', t.title.trim() || `Трек ${i + 1}`);
+        form.append('genre', genre);
+        form.append('visibility', visibility);
+        form.append('albumId', String(alb.data.id));
+        form.append('file', t.file);
+        await tracksApi.create(form);
+      }
+      toast.success('Альбом опубликован!');
+      navigate(`/album/${alb.data.id}`);
+    } catch {
+      toast.error('Ошибка загрузки альбома');
+    } finally {
+      setUploading(false);
+      setProgressLabel('');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode === 'album') submitAlbum(); else submitSingle();
   };
 
   const visOptions: { v: Visibility; label: string; desc: string; icon: React.ReactNode }[] = [
@@ -106,42 +135,47 @@ export const UploadPage = () => {
 
   return (
     <form onSubmit={handleSubmit} className="px-4 md:px-8 py-6 max-w-5xl mx-auto">
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
           <p className="text-xs tracking-widest text-[#666] uppercase mb-1">Панель артиста</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">ЗАГРУЗИТЬ ТРЕК</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">{mode === 'album' ? 'ЗАГРУЗИТЬ АЛЬБОМ' : 'ЗАГРУЗИТЬ ТРЕК'}</h1>
         </div>
-        <span className="text-xs text-[#888] bg-[#151515] px-3 py-1.5 rounded-full">Поддерживаются: MP3, WAV, FLAC</span>
+        <span className="text-xs text-[#888] bg-[#151515] px-3 py-1.5 rounded-full">MP3, WAV, FLAC</span>
+      </div>
+
+      <div className="inline-flex p-1 bg-[#0e0e0e] border border-[#1f1f1f] rounded-full mb-6">
+        {(['single', 'album'] as Mode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`px-5 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1.5 ${mode === m ? 'bg-white text-black' : 'text-[#888] hover:text-white'}`}
+          >
+            {m === 'album' && <Disc3 size={14} />} {m === 'single' ? 'Сингл' : 'Альбом'}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
         <div className="space-y-5">
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-2xl p-10 md:p-14 text-center cursor-pointer transition ${isDragActive ? 'border-white bg-white/5' : 'border-[#2a2a2a] hover:border-[#444] bg-[#0e0e0e]'}`}
+            className={`border-2 border-dashed rounded-2xl p-10 md:p-12 text-center cursor-pointer transition ${isDragActive ? 'border-white bg-white/5' : 'border-[#2a2a2a] hover:border-[#444] bg-[#0e0e0e]'}`}
           >
             <input {...getInputProps()} />
             <UploadCloud size={40} className="mx-auto text-[#888]" />
-            <p className="mt-3 font-medium">Перетащите файл сюда</p>
-            <p className="text-sm text-[#888]">или <span className="text-white underline">загрузите</span> с вашего компьютера</p>
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-5 text-xs text-[#666]">
-              <span className="bg-[#151515] px-2.5 py-1 rounded-full">MP3</span>
-              <span className="bg-[#151515] px-2.5 py-1 rounded-full">WAV</span>
-              <span className="bg-[#151515] px-2.5 py-1 rounded-full">FLAC</span>
-              <span className="bg-[#151515] px-2.5 py-1 rounded-full">Макс. 100 МБ</span>
-            </div>
+            <p className="mt-3 font-medium">{mode === 'album' ? 'Перетащите несколько файлов' : 'Перетащите файл сюда'}</p>
+            <p className="text-sm text-[#888]">или <span className="text-white underline">выберите</span> с компьютера</p>
+            {mode === 'album' && <p className="text-xs text-[#666] mt-2">Можно выбрать сразу все треки альбома</p>}
           </div>
 
-          {audioFile && (
+          {mode === 'single' && audioFile && (
             <div className="flex items-center gap-3 bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-3">
               <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
                 <Music size={18} className="text-violet-400" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{audioFile.name}</p>
-                <div className="h-1.5 bg-[#222] rounded-full mt-2 overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full w-full" />
-                </div>
               </div>
               <span className="text-xs text-[#888] shrink-0">{(audioFile.size / (1024 * 1024)).toFixed(1)} MB</span>
               <span className="inline-flex items-center gap-1 text-xs text-green-400 shrink-0"><Check size={14} /> Готово</span>
@@ -149,92 +183,89 @@ export const UploadPage = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Название трека">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, Полночь" className="ns-input" />
-            </Field>
-            <Field label="Артист">
-              <input value={user?.nickname || user?.firstName || ''} readOnly className="ns-input opacity-70 cursor-not-allowed" />
-            </Field>
-            <Field label="Жанр">
-              <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Например, хип-хоп" className="ns-input" />
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {GENRES.map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setGenre(g)}
-                    className={`text-xs px-2.5 py-1 rounded-full transition ${genre === g ? 'bg-white text-black' : 'bg-[#151515] text-[#aaa] hover:bg-[#222]'}`}
-                  >
-                    {g}
-                  </button>
-                ))}
+          {mode === 'album' && (
+            <>
+              <input value={albumTitle} onChange={(e) => setAlbumTitle(e.target.value)} placeholder="Название альбома" className="ns-input text-lg" />
+              {albumTracks.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-[#666]">{albumTracks.length} {albumTracks.length === 1 ? 'трек' : 'треков'} в альбоме:</p>
+                  {albumTracks.map((t, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-2.5">
+                      <GripVertical size={15} className="text-[#444] shrink-0" />
+                      <span className="text-xs text-[#666] w-5 text-center shrink-0">{i + 1}</span>
+                      <input
+                        value={t.title}
+                        onChange={(e) => setTrackTitle(i, e.target.value)}
+                        className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b border-transparent focus:border-[#333] py-1"
+                      />
+                      <span className="text-xs text-[#888] shrink-0">{(t.file.size / (1024 * 1024)).toFixed(1)} MB</span>
+                      <button type="button" onClick={() => removeTrack(i)} className="text-[#666] hover:text-red-400 shrink-0"><X size={15} /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {mode === 'single' && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Название трека">
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, Полночь" className="ns-input" />
+                </Field>
+                <Field label="Артист">
+                  <input value={user?.nickname || user?.firstName || ''} readOnly className="ns-input opacity-70 cursor-not-allowed" />
+                </Field>
+                <Field label="Темп">
+                  <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="напр. 128" className="ns-input" />
+                </Field>
+                <Field label="Совместно с (фит)">
+                  <input value={featuring} onChange={(e) => setFeaturing(e.target.value)} placeholder="Например, Markul" className="ns-input" />
+                </Field>
               </div>
-            </Field>
-            <Field label="Темп">
-              <input value={bpm} onChange={(e) => setBpm(e.target.value.replace(/\D/g, ''))} placeholder="напр. 128" className="ns-input" />
-            </Field>
-          </div>
-          <Field label="Совместно с (фит)">
-            <input value={featuring} onChange={(e) => setFeaturing(e.target.value)} placeholder="Например, Oxxxymiron, Markul" className="ns-input" />
-          </Field>
-          <Field label="Описание">
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Расскажите о треке..." className="ns-input resize-none h-24" />
+              <Field label="Описание">
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Расскажите о треке..." className="ns-input resize-none h-24" />
+              </Field>
+            </>
+          )}
+
+          <Field label="Жанр">
+            <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Например, хип-хоп" className="ns-input" />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {GENRES.map((g) => (
+                <button key={g} type="button" onClick={() => setGenre(g)} className={`text-xs px-2.5 py-1 rounded-full transition ${genre === g ? 'bg-white text-black' : 'bg-[#151515] text-[#aaa] hover:bg-[#222]'}`}>{g}</button>
+              ))}
+            </div>
           </Field>
         </div>
 
         <div className="space-y-6">
           <div>
-            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Обложка</p>
+            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">{mode === 'album' ? 'Обложка альбома' : 'Обложка'}</p>
             <label className="relative block aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-[#2a2a2a] hover:border-[#444] cursor-pointer group bg-[#0e0e0e]">
               {coverPreview ? (
                 <>
                   <img src={coverPreview} alt="cover" className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-sm font-medium">
-                    <ImageIcon size={16} className="mr-2" /> Изменить обложку
+                    <ImageIcon size={16} className="mr-2" /> Изменить
                   </div>
                 </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-[#888]">
                   <ImageIcon size={28} />
-                  <span className="text-sm mt-2">Изменить обложку</span>
+                  <span className="text-sm mt-2">Загрузить обложку</span>
                 </div>
               )}
               <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
             </label>
-            <p className="text-xs text-[#666] mt-2">JPG, PNG или WEBP. Мин. 800×800</p>
-          </div>
-
-          <div>
-            <p className="text-xs tracking-widest text-[#666] uppercase mb-3 flex items-center gap-1.5"><Disc3 size={13} /> Альбом</p>
-            <select value={albumChoice} onChange={(e) => setAlbumChoice(e.target.value)} className="ns-input">
-              <option value="">Сингл (без альбома)</option>
-              {(myAlbums || []).map((a) => (
-                <option key={a.id} value={a.id}>{a.title}</option>
-              ))}
-              <option value="new">➕ Новый альбом…</option>
-            </select>
-            {albumChoice === 'new' && (
-              <input
-                value={newAlbumTitle}
-                onChange={(e) => setNewAlbumTitle(e.target.value)}
-                placeholder="Название альбома"
-                className="ns-input mt-2"
-              />
-            )}
-            <p className="text-xs text-[#666] mt-2">Загружайте треки в один альбом, чтобы собрать релиз.</p>
+            {mode === 'album' && <p className="text-xs text-[#666] mt-2">Общая обложка для всех треков альбома</p>}
           </div>
 
           <div>
             <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Доступ</p>
             <div className="space-y-2">
               {visOptions.map((o) => (
-                <button
-                  type="button"
-                  key={o.v}
-                  onClick={() => setVisibility(o.v)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition ${visibility === o.v ? 'border-white bg-white/5' : 'border-[#1f1f1f] hover:border-[#333]'}`}
-                >
+                <button type="button" key={o.v} onClick={() => setVisibility(o.v)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition ${visibility === o.v ? 'border-white bg-white/5' : 'border-[#1f1f1f] hover:border-[#333]'}`}>
                   <span className="text-[#aaa]">{o.icon}</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-medium">{o.label}</span>
@@ -248,21 +279,21 @@ export const UploadPage = () => {
             </div>
           </div>
 
-          <div>
-            <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Дата релиза</p>
-            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#1f1f1f]">
-              <span className="text-sm">Опубликовать сейчас</span>
-              <button type="button" onClick={() => setPublishNow((p) => !p)} className={`w-11 h-6 rounded-full p-0.5 transition ${publishNow ? 'bg-white' : 'bg-[#333]'}`}>
-                <span className={`block w-5 h-5 rounded-full transition ${publishNow ? 'bg-black translate-x-5' : 'bg-white translate-x-0'}`} />
-              </button>
+          {mode === 'single' && (
+            <div>
+              <p className="text-xs tracking-widest text-[#666] uppercase mb-3">Дата релиза</p>
+              <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#1f1f1f]">
+                <span className="text-sm">Опубликовать сейчас</span>
+                <button type="button" onClick={() => setPublishNow((p) => !p)} className={`w-11 h-6 rounded-full p-0.5 transition ${publishNow ? 'bg-white' : 'bg-[#333]'}`}>
+                  <span className={`block w-5 h-5 rounded-full transition ${publishNow ? 'bg-black translate-x-5' : 'bg-white translate-x-0'}`} />
+                </button>
+              </div>
+              {!publishNow && <input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} className="ns-input mt-2" />}
             </div>
-            {!publishNow && (
-              <input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} className="ns-input mt-2" />
-            )}
-          </div>
+          )}
 
           <button type="submit" disabled={uploading} className="w-full py-3 rounded-full bg-white text-black font-semibold disabled:opacity-50 hover:opacity-90 transition">
-            {uploading ? 'Загрузка...' : 'Опубликовать трек'}
+            {uploading ? (progressLabel || 'Загрузка...') : (mode === 'album' ? `Опубликовать альбом${albumTracks.length ? ` (${albumTracks.length})` : ''}` : 'Опубликовать трек')}
           </button>
         </div>
       </div>

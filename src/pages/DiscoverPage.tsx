@@ -3,8 +3,10 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
+import { albumsApi } from '../api/albums.api';
 import { TrackCard } from '@/components/TrackCard';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import type { Album } from '@/types';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
@@ -60,6 +62,27 @@ const NewArtists = ({ artists }: { artists: { user: User; count: number }[] }) =
   );
 };
 
+const AlbumsRow = ({ albums }: { albums?: Album[] }) => {
+  const navigate = useNavigate();
+  if (!albums?.length) return null;
+  return (
+    <section className="space-y-4">
+      <h2 className="text-2xl font-bold">Новые альбомы</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {albums.slice(0, 12).map((a) => (
+          <button key={a.id} onClick={() => navigate(`/album/${a.id}`)} className="text-left group">
+            <div className="aspect-square rounded-2xl overflow-hidden bg-[#151515]">
+              <img src={resolveAssetUrl(a.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-full h-full object-cover group-hover:scale-105 transition" />
+            </div>
+            <p className="text-sm font-medium truncate mt-2">{a.title}</p>
+            <p className="text-xs text-[#666] truncate">{a.user?.nickname || a.user?.firstName} · {a.trackCount} тр.</p>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 export const DiscoverPage = () => {
   const { user } = useAuthStore();
   const { data: tracks, isLoading } = useQuery({
@@ -74,6 +97,10 @@ export const DiscoverPage = () => {
     queryKey: ['history'],
     queryFn: () => tracksApi.getHistory().then((r) => r.data),
     enabled: !!user,
+  });
+  const { data: recentAlbums } = useQuery({
+    queryKey: ['recent-albums'],
+    queryFn: () => albumsApi.getRecent().then((r) => r.data),
   });
   const { setTrack } = usePlayerStore();
 
@@ -125,6 +152,7 @@ export const DiscoverPage = () => {
       )}
 
       {!!trending?.length && <Section title="🔥 В тренде за неделю" tracks={trending} loading={trendingLoading} />}
+      <AlbumsRow albums={recentAlbums} />
       {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       <NewArtists artists={newArtists} />
       <Section title="Новое" tracks={tracks} loading={isLoading} />
