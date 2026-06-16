@@ -52,6 +52,49 @@ const Visualizer = ({ analyser, isPlaying, color = '#a855f7' }: { analyser: Anal
   return <canvas ref={canvasRef} width={120} height={32} className="hidden md:block h-8 w-[120px] opacity-90" />;
 };
 
+const SeekBar = ({ value, max, onSeek, heightClass = 'h-1' }: { value: number; max: number; onSeek: (t: number) => void; heightClass?: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scrub, setScrub] = useState<number | null>(null);
+  const dragging = useRef(false);
+
+  const pctAt = (clientX: number) => {
+    const r = ref.current!.getBoundingClientRect();
+    return Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+  };
+  const down = (e: React.PointerEvent) => {
+    if (!max) return;
+    dragging.current = true;
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    setScrub(pctAt(e.clientX));
+  };
+  const move = (e: React.PointerEvent) => { if (dragging.current) setScrub(pctAt(e.clientX)); };
+  const up = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    const p = pctAt(e.clientX);
+    setScrub(null);
+    if (max) onSeek(p * max);
+  };
+
+  const width = scrub != null ? scrub * 100 : (max ? (value / max) * 100 : 0);
+  return (
+    <div
+      ref={ref}
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={up}
+      onPointerCancel={up}
+      className={`relative w-full ${heightClass} bg-[#2a2a2a] rounded-full cursor-pointer touch-none select-none group`}
+    >
+      <div className="h-full bg-white rounded-full" style={{ width: `${width}%` }} />
+      <span
+        className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow transition-opacity ${scrub != null ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        style={{ left: `${width}%` }}
+      />
+    </div>
+  );
+};
+
 export const Player = () => {
   const {
     currentTrack,
@@ -76,12 +119,6 @@ export const Player = () => {
 
   const [liked, setLiked] = useState(false);
 
-  const mobileProgressRef =
-    useRef<HTMLDivElement>(null);
-
-  const desktopProgressRef =
-    useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (currentTrack && user) {
       tracksApi
@@ -92,21 +129,6 @@ export const Player = () => {
         .catch(() => {});
     }
   }, [currentTrack, user]);
-
-  const handleProgressClick = (
-    e: React.MouseEvent,
-    ref: React.RefObject<HTMLDivElement | null>
-  ) => {
-    if (!ref.current || !duration) return;
-
-    const rect =
-      ref.current.getBoundingClientRect();
-
-    const pct =
-      (e.clientX - rect.left) / rect.width;
-
-    seekTo(pct * duration);
-  };
 
   const handleLike = async () => {
     if (!currentTrack || !user) return;
@@ -187,34 +209,7 @@ export const Player = () => {
             </div>
 
             <div className="w-full mt-8">
-              <div
-                ref={mobileProgressRef}
-                onClick={(e) =>
-                  handleProgressClick(
-                    e,
-                    mobileProgressRef
-                  )
-                }
-                className="
-                  w-full h-1.5
-                  bg-[#2a2a2a]
-                  rounded-full
-                  cursor-pointer
-                "
-              >
-                <div
-                  className="
-                    h-full bg-white rounded-full
-                  "
-                  style={{
-                    width: `${
-                      duration
-                        ? (progress / duration) * 100
-                        : 0
-                    }%`,
-                  }}
-                />
-              </div>
+              <SeekBar value={progress} max={duration} onSeek={seekTo} heightClass="h-1.5" />
 
               <div className="flex justify-between mt-2 text-xs text-[#888]">
                 <span>{formatTime(progress)}</span>
@@ -360,34 +355,7 @@ export const Player = () => {
           </div>
 
           <div className="w-full max-w-xl mt-2">
-            <div
-              ref={desktopProgressRef}
-              onClick={(e) =>
-                handleProgressClick(
-                  e,
-                  desktopProgressRef
-                )
-              }
-              className="
-                w-full h-1
-                bg-[#242424]
-                rounded-full
-                cursor-pointer
-              "
-            >
-              <div
-                className="
-                  h-full bg-white rounded-full
-                "
-                style={{
-                  width: `${
-                    duration
-                      ? (progress / duration) * 100
-                      : 0
-                  }%`,
-                }}
-              />
-            </div>
+            <SeekBar value={progress} max={duration} onSeek={seekTo} heightClass="h-1" />
 
             <div className="flex justify-between text-[10px] text-[#888888] mt-1">
               <span>{formatTime(progress)}</span>

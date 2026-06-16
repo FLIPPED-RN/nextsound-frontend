@@ -88,6 +88,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
+    audio.preload = 'auto';
     audio.src = url;
 
     audio.volume = get().volume;
