@@ -8,6 +8,9 @@ import { SearchPage } from '../pages/SearchPage';
 import { LikedPage } from '../pages/LikedPage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { PrivacyPage } from '../pages/PrivacyPage';
+import { TermsPage } from '../pages/TermsPage';
+import { RecommendationsPage } from '../pages/RecommendationsPage';
 import { useAuthStore } from '../store/auth.store';
 import { PlaylistPage } from '@/pages/PlaylistPage';
 import { AdminPage } from '../pages/AdminPage';
@@ -31,6 +34,9 @@ export const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegisterPage />} />
+    <Route path="/privacy" element={<PrivacyPage />} />
+    <Route path="/terms" element={<TermsPage />} />
+    <Route path="/recommendations" element={<RecommendationsPage />} />
     <Route path="/" element={<MainLayout />}>
       <Route index element={<DiscoverPage />} />
       <Route path="discover" element={<DiscoverPage />} />

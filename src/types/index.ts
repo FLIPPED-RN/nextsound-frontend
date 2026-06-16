@@ -92,6 +92,9 @@ export interface RegisterDto {
   nickname?: string;
   email: string;
   password: string;
+  consentPrivacy?: boolean;
+  consentTerms?: boolean;
+  consentMarketing?: boolean;
 }
 
 export interface CreateTrackDto {

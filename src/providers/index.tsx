@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
+import { CookieConsent } from '../components/CookieConsent';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30000, retry: 1 } },
@@ -27,6 +28,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => (
     <BrowserRouter>
       <AuthProvider>
         {children}
+        <CookieConsent />
         <Toaster position="bottom-center" toastOptions={{ style: { background: '#151515', color: '#fff', borderRadius: '12px' } }} />
       </AuthProvider>
     </BrowserRouter>

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, AtSign, ArrowRight, LoaderCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 import { AuthShell, AuthInput } from '../components/AuthShell';
 import { VerifyForm } from '../components/VerifyForm';
 
 export const RegisterPage = () => {
   const [form, setForm] = useState({ firstName: '', lastName: '', nickname: '', email: '', password: '' });
+  const [consents, setConsents] = useState({ legal: false, marketing: false });
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,9 +23,15 @@ export const RegisterPage = () => {
     e.preventDefault();
     setError('');
     if (form.password.length < 6) { setError('Пароль должен быть не короче 6 символов'); return; }
+    if (!consents.legal) { toast.error('Примите Политику конфиденциальности и Пользовательское соглашение'); return; }
     setLoading(true);
     try {
-      const res = await register(form);
+      const res = await register({
+        ...form,
+        consentPrivacy: true,
+        consentTerms: true,
+        consentMarketing: consents.marketing,
+      });
       if (res.needVerification) {
         setPendingEmail(res.email || form.email);
       } else {
@@ -75,9 +83,34 @@ export const RegisterPage = () => {
           }
         />
 
+        <div className="space-y-2.5 pt-1">
+          <label className="flex items-start gap-2.5 text-xs text-[#9a9a9a] leading-relaxed cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consents.legal}
+              onChange={(e) => setConsents({ ...consents, legal: e.target.checked })}
+              className="mt-0.5 w-4 h-4 accent-violet-500 shrink-0"
+            />
+            <span>
+              Я даю согласие на обработку персональных данных, ознакомлен(а) и принимаю{' '}
+              <Link to="/privacy" target="_blank" className="text-white hover:underline">Политику конфиденциальности</Link>{' '}и{' '}
+              <Link to="/terms" target="_blank" className="text-white hover:underline">Пользовательское соглашение</Link>.
+            </span>
+          </label>
+          <label className="flex items-start gap-2.5 text-xs text-[#9a9a9a] leading-relaxed cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consents.marketing}
+              onChange={(e) => setConsents({ ...consents, marketing: e.target.checked })}
+              className="mt-0.5 w-4 h-4 accent-violet-500 shrink-0"
+            />
+            <span>Я согласен(на) получать информационные и рекламные сообщения о сервисе (необязательно).</span>
+          </label>
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !consents.legal}
           className="w-full py-3 bg-white text-black rounded-xl font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60"
         >
           {loading ? <LoaderCircle size={18} className="animate-spin" /> : <>Создать аккаунт <ArrowRight size={18} /></>}
