@@ -1,8 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Play, Pause, Disc3 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Play, Pause, Disc3, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { albumsApi } from '../api/albums.api';
 import { usePlayerStore } from '../store/player.store';
+import { useAuthStore } from '../store/auth.store';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 
@@ -10,6 +12,8 @@ export const AlbumPage = () => {
   const { id } = useParams<{ id: string }>();
   const albumId = Number(id);
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { user } = useAuthStore();
   const { setTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
 
   const { data: album, isLoading } = useQuery({
@@ -31,6 +35,19 @@ export const AlbumPage = () => {
   const tracks = album.tracks || [];
   const cover = resolveAssetUrl(album.cover_path);
   const playAll = () => { if (tracks.length) setTrack(tracks[0], tracks); };
+  const canDelete = !!user && (user.id === album.userId || user.role === 'admin');
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить альбом «${album.title}»? Треки останутся как отдельные синглы.`)) return;
+    try {
+      await albumsApi.delete(album.id);
+      toast.success('Альбом удалён');
+      qc.invalidateQueries({ queryKey: ['albums', album.userId] });
+      navigate(`/artist/${album.userId}`);
+    } catch {
+      toast.error('Не удалось удалить альбом');
+    }
+  };
 
   return (
     <div className="px-4 md:px-8 py-6 max-w-5xl mx-auto">
@@ -51,9 +68,16 @@ export const AlbumPage = () => {
           <p className="text-sm text-[#666] mt-2">
             {album.trackCount} {album.trackCount === 1 ? 'трек' : 'треков'} · {formatCount(album.plays || 0)} прослушиваний
           </p>
-          <button onClick={playAll} className="mt-5 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition">
-            <Play size={16} /> Слушать
-          </button>
+          <div className="flex items-center gap-2 mt-5">
+            <button onClick={playAll} className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition">
+              <Play size={16} /> Слушать
+            </button>
+            {canDelete && (
+              <button onClick={handleDelete} title="Удалить альбом" className="w-10 h-10 rounded-full border border-[#242424] flex items-center justify-center text-[#888] hover:text-red-400 hover:border-red-400/50 transition">
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

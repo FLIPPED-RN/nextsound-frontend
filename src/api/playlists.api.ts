@@ -10,6 +10,11 @@ export const playlistsApi = {
   createExclusive: (name: string) => apiClient.post<Playlist>('/playlists/exclusive', { name }),
   setExclusive: (id: number, isExclusive: boolean) =>
     apiClient.patch<Playlist>(`/playlists/${id}/exclusive`, { isExclusive }),
+  setCover: (id: number, file: File) => {
+    const form = new FormData();
+    form.append('cover', file);
+    return apiClient.post<Playlist>(`/playlists/${id}/cover`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
   addTrack: (playlistId: number, trackId: number) =>
     apiClient.post(`/playlists/${playlistId}/tracks`, { trackId }),
   removeTrack: (playlistId: number, trackId: number) =>

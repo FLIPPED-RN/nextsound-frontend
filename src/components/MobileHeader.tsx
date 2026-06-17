@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Crown } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl } from '../lib/utils';
 import { NotificationBell } from './NotificationBell';
@@ -16,6 +17,9 @@ export const MobileHeader = () => {
 
       {user ? (
         <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/premium')} aria-label="Premium" className="w-9 h-9 rounded-full flex items-center justify-center text-violet-300 hover:bg-white/10 transition">
+            <Crown size={20} />
+          </button>
           <NotificationBell />
           <button onClick={() => navigate(`/artist/${user.id}`)} aria-label="Профиль">
             {user.avatar ? (

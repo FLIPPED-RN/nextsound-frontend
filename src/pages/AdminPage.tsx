@@ -405,6 +405,15 @@ const ExclusiveTab = () => {
     } catch { toast.error('Не удалось создать'); }
   };
 
+  const changeCover = async (id: number, file?: File) => {
+    if (!file) return;
+    try {
+      await playlistsApi.setCover(id, file);
+      toast.success('Обложка обновлена');
+      qc.invalidateQueries({ queryKey: ['exclusive-playlists'] });
+    } catch { toast.error('Не удалось загрузить обложку'); }
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-2xl p-4">
@@ -419,12 +428,16 @@ const ExclusiveTab = () => {
       {isLoading ? <div className="h-14 bg-[#0e0e0e] rounded-lg animate-pulse" /> : (
         <div className="space-y-1">
           {(playlists || []).map((p) => (
-            <div key={p.id} onClick={() => navigate(`/playlists/${p.id}`)} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 cursor-pointer">
+            <div key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5">
               <img src={resolveAssetUrl(p.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515]" />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 cursor-pointer" onClick={() => navigate(`/playlists/${p.id}`)}>
                 <p className="text-sm font-medium truncate">{p.name}</p>
                 <p className="text-xs text-[#666]">{p.trackCount} треков · эксклюзив</p>
               </div>
+              <label className="text-xs text-violet-300 hover:text-violet-200 cursor-pointer px-2 py-1 shrink-0">
+                Обложка
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => changeCover(p.id, e.target.files?.[0])} />
+              </label>
             </div>
           ))}
           {!playlists?.length && <p className="text-sm text-[#666] py-6 text-center">Эксклюзивных плейлистов пока нет.</p>}
