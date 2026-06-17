@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play } from 'lucide-react';
+import { Play, Crown, Lock } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
 import { albumsApi } from '../api/albums.api';
+import { playlistsApi } from '../api/playlists.api';
+import type { Playlist } from '@/types';
 import { TrackCard } from '@/components/TrackCard';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import type { Album } from '@/types';
@@ -83,6 +85,28 @@ const AlbumsRow = ({ albums }: { albums?: Album[] }) => {
   );
 };
 
+const ExclusiveRow = ({ playlists }: { playlists?: Playlist[] }) => {
+  const navigate = useNavigate();
+  if (!playlists?.length) return null;
+  return (
+    <section className="space-y-4">
+      <h2 className="text-2xl font-bold flex items-center gap-2"><Crown size={20} className="text-violet-400" /> Эксклюзив</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {playlists.slice(0, 12).map((p) => (
+          <button key={p.id} onClick={() => navigate(`/playlists/${p.id}`)} className="text-left group">
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-violet-600/40 to-blue-600/30">
+              {p.cover_path && <img src={resolveAssetUrl(p.cover_path)} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} className="w-full h-full object-cover group-hover:scale-105 transition" />}
+              <span className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur flex items-center justify-center"><Lock size={13} className="text-violet-300" /></span>
+            </div>
+            <p className="text-sm font-medium truncate mt-2">{p.name}</p>
+            <p className="text-xs text-[#666]">{p.trackCount} тр. · Plus</p>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 export const DiscoverPage = () => {
   const { user } = useAuthStore();
   const { data: tracks, isLoading } = useQuery({
@@ -101,6 +125,10 @@ export const DiscoverPage = () => {
   const { data: recentAlbums } = useQuery({
     queryKey: ['recent-albums'],
     queryFn: () => albumsApi.getRecent().then((r) => r.data),
+  });
+  const { data: exclusive } = useQuery({
+    queryKey: ['exclusive-playlists'],
+    queryFn: () => playlistsApi.getExclusive().then((r) => r.data),
   });
   const { setTrack } = usePlayerStore();
 
@@ -152,6 +180,7 @@ export const DiscoverPage = () => {
       )}
 
       {!!trending?.length && <Section title="🔥 В тренде за неделю" tracks={trending} loading={trendingLoading} />}
+      <ExclusiveRow playlists={exclusive} />
       <AlbumsRow albums={recentAlbums} />
       {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       <NewArtists artists={newArtists} />

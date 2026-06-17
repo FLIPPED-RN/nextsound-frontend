@@ -9,6 +9,8 @@ export interface User {
   banner?: string;
   links?: string;
   bio?: string;
+  plan?: string;
+  planExpires?: string | null;
   isVerified?: boolean;
   isArtistVerified?: boolean;
   created_at: string;
@@ -82,6 +84,9 @@ export interface Playlist {
   name: string;
   userId: number;
   user: User;
+  isExclusive?: boolean;
+  cover_path?: string | null;
+  trackCount?: number;
   created_at: string;
   updated_at: string;
   tracks?: Track[];

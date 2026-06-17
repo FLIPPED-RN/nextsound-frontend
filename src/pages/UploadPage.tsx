@@ -84,8 +84,8 @@ export const UploadPage = () => {
       const res = await tracksApi.create(form);
       toast.success('Трек загружен!');
       navigate(`/track/${res.data.id}`);
-    } catch {
-      toast.error('Ошибка загрузки');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Ошибка загрузки');
     } finally {
       setUploading(false);
     }
@@ -114,8 +114,8 @@ export const UploadPage = () => {
       }
       toast.success('Альбом опубликован!');
       navigate(`/album/${alb.data.id}`);
-    } catch {
-      toast.error('Ошибка загрузки альбома');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Ошибка загрузки альбома');
     } finally {
       setUploading(false);
       setProgressLabel('');

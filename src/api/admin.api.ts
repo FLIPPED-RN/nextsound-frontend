@@ -32,6 +32,8 @@ export const adminApi = {
   setRole: (id: number, role: string) => apiClient.patch<User>(`/admin/users/${id}/role`, { role }),
   setArtistVerified: (id: number, verified: boolean) =>
     apiClient.patch<User>(`/admin/users/${id}/artist-verified`, { verified }),
+  setPlan: (id: number, plan: string, days?: number) =>
+    apiClient.patch<User>(`/admin/users/${id}/plan`, { plan, days }),
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
   getComments: () => apiClient.get<Comment[]>('/admin/comments'),
   deleteComment: (id: number) => apiClient.delete(`/admin/comments/${id}`),

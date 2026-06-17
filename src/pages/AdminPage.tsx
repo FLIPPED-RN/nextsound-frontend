@@ -7,12 +7,13 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminApi } from '../api/admin.api';
+import { playlistsApi } from '../api/playlists.api';
 import type { AdminStats, AdminUser } from '../api/admin.api';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatNumber, formatCount, formatBytes, formatDate } from '@/lib/utils';
 import type { Track, Comment } from '@/types';
 
-type Tab = 'overview' | 'tracks' | 'users' | 'comments' | 'reports';
+type Tab = 'overview' | 'tracks' | 'users' | 'comments' | 'reports' | 'exclusive';
 
 export const AdminPage = () => {
   const [tab, setTab] = useState<Tab>('overview');
@@ -24,6 +25,7 @@ export const AdminPage = () => {
     { id: 'users', label: 'Пользователи' },
     { id: 'comments', label: 'Комментарии' },
     { id: 'reports', label: `Жалобы${reports?.length ? ` (${reports.length})` : ''}` },
+    { id: 'exclusive', label: 'Эксклюзив' },
   ];
 
   return (
@@ -55,6 +57,7 @@ export const AdminPage = () => {
       {tab === 'users' && <UsersTab />}
       {tab === 'comments' && <CommentsTab />}
       {tab === 'reports' && <ReportsTab />}
+      {tab === 'exclusive' && <ExclusiveTab />}
     </div>
   );
 };
@@ -249,6 +252,14 @@ const UsersTab = () => {
     } catch { toast.error('Не удалось'); }
   };
 
+  const changePlan = async (u: AdminUser, plan: string) => {
+    try {
+      await adminApi.setPlan(u.id, plan);
+      toast.success(`Тариф: ${plan}`);
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+    } catch { toast.error('Не удалось'); }
+  };
+
   if (isLoading) return <div className="space-y-2">{Array(6).fill(0).map((_, i) => <div key={i} className="h-14 bg-[#0e0e0e] rounded-lg animate-pulse" />)}</div>;
 
   return (
@@ -274,6 +285,9 @@ const UsersTab = () => {
           >
             <option value="0">Не подтверждён</option>
             <option value="1">✓ Артист</option>
+          </select>
+          <select value={u.plan || 'free'} onChange={(e) => changePlan(u, e.target.value)} title="Тариф подписки" className="bg-[#0e0e0e] border border-[#1f1f1f] rounded-lg text-xs px-2 py-1.5 outline-none focus:border-violet-500/60 shrink-0">
+            {['free', 'plus', 'artist', 'pro'].map((p) => <option key={p} value={p}>{p === 'free' ? 'Free' : p[0].toUpperCase() + p.slice(1)}</option>)}
           </select>
           <select value={u.role} onChange={(e) => changeRole(u, e.target.value)} title="Роль" className="bg-[#0e0e0e] border border-[#1f1f1f] rounded-lg text-xs px-2 py-1.5 outline-none focus:border-violet-500/60 shrink-0 hidden sm:block">
             {Object.entries(ROLE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -371,6 +385,51 @@ const ReportsTab = () => {
         </div>
       ))}
       {!reports?.length && <p className="text-sm text-[#666] py-6 text-center">Жалоб нет.</p>}
+    </div>
+  );
+};
+
+const ExclusiveTab = () => {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const { data: playlists, isLoading } = useQuery({ queryKey: ['exclusive-playlists'], queryFn: () => playlistsApi.getExclusive().then((r) => r.data) });
+
+  const create = async () => {
+    if (!name.trim()) return;
+    try {
+      await playlistsApi.createExclusive(name.trim());
+      toast.success('Эксклюзивный плейлист создан');
+      setName('');
+      qc.invalidateQueries({ queryKey: ['exclusive-playlists'] });
+    } catch { toast.error('Не удалось создать'); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-2xl p-4">
+        <p className="text-sm font-semibold mb-1">Создать эксклюзивный плейлист</p>
+        <p className="text-xs text-[#777] mb-3">Доступен только подписчикам Plus и выше. Треки добавляются на странице трека через «Добавить в плейлист».</p>
+        <div className="flex gap-2">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название подборки" className="flex-1 bg-[#0e0e0e] border border-[#1f1f1f] rounded-lg text-sm px-3 py-2 outline-none focus:border-violet-500/60" />
+          <button onClick={create} className="px-4 py-2 rounded-lg text-sm font-semibold bg-violet-600 hover:bg-violet-500 transition">Создать</button>
+        </div>
+      </div>
+
+      {isLoading ? <div className="h-14 bg-[#0e0e0e] rounded-lg animate-pulse" /> : (
+        <div className="space-y-1">
+          {(playlists || []).map((p) => (
+            <div key={p.id} onClick={() => navigate(`/playlists/${p.id}`)} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 cursor-pointer">
+              <img src={resolveAssetUrl(p.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-10 h-10 rounded object-cover bg-[#151515]" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{p.name}</p>
+                <p className="text-xs text-[#666]">{p.trackCount} треков · эксклюзив</p>
+              </div>
+            </div>
+          ))}
+          {!playlists?.length && <p className="text-sm text-[#666] py-6 text-center">Эксклюзивных плейлистов пока нет.</p>}
+        </div>
+      )}
     </div>
   );
 };

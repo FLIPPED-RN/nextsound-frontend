@@ -1,10 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { Play, Pause, Plus, Trash2, ListMusic, LayoutGrid, List, ChevronLeft, BarChart3, X } from 'lucide-react';
+import { Play, Pause, Plus, Trash2, ListMusic, LayoutGrid, List, ChevronLeft, BarChart3, X, Lock, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { playlistsApi } from '../api/playlists.api';
 import { usePlayerStore } from '../store/player.store';
+import { useAuthStore } from '../store/auth.store';
+import { isSubscriber } from '../lib/plans';
 import { resolveAssetUrl, formatDate } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
 import { VerifiedBadge } from '../components/VerifiedBadge';
@@ -190,15 +192,21 @@ const CoverBox = ({ cover }: { cover: string }) => (
 const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuthStore();
   const { setTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
 
   const { data: playlist } = useQuery({
     queryKey: ['playlist', playlistId],
     queryFn: () => playlistsApi.getOne(playlistId).then((r) => r.data),
   });
+
+  const locked = !!playlist?.isExclusive && !isSubscriber(user)
+    && user?.id !== playlist?.userId && user?.role !== 'admin';
+
   const { data: tracksData } = useQuery({
     queryKey: ['playlist-tracks', playlistId],
     queryFn: () => playlistsApi.getTracks(playlistId).then((r) => r.data),
+    enabled: !!playlist && !locked,
   });
 
   const tracks = useMemo(() => extractTracks(tracksData), [tracksData]);
@@ -212,6 +220,27 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
   };
 
   if (!playlist) return <div className="p-8 animate-pulse"><div className="h-8 w-48 bg-[#151515] rounded" /></div>;
+
+  if (locked) {
+    return (
+      <div className="px-4 md:px-8 py-6">
+        <button onClick={() => navigate('/playlists')} className="inline-flex items-center gap-1 text-sm text-[#888] hover:text-white transition mb-8">
+          <ChevronLeft size={16} /> Назад
+        </button>
+        <div className="max-w-md mx-auto text-center mt-10">
+          <div className="w-20 h-20 rounded-3xl bg-violet-500/15 flex items-center justify-center mx-auto mb-5">
+            <Lock size={34} className="text-violet-400" />
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-violet-300"><Crown size={13} /> Эксклюзив</span>
+          <h1 className="text-2xl md:text-3xl font-extrabold mt-2">{playlist.name}</h1>
+          <p className="text-[#9a9a9a] mt-3">Этот плейлист доступен по подписке NextSound Plus. Оформи подписку, чтобы слушать эксклюзивные подборки.</p>
+          <button onClick={() => navigate('/premium')} className="mt-6 px-7 py-3 rounded-full bg-violet-500 hover:bg-violet-400 text-white font-semibold transition">
+            Оформить Plus за 99 ₽
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const cover = tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
 
