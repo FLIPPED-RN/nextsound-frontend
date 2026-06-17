@@ -4,6 +4,7 @@ import { Outlet } from 'react-router';
 import { Player } from '@/components/Player';
 import { MobileNavbar } from '@/components/MobileNavbar';
 import { MobileHeader } from '@/components/MobileHeader';
+import { Footer } from '@/components/Footer';
 
 export const MainLayout = () => {
   const currentTrack = usePlayerStore(
@@ -38,6 +39,7 @@ export const MainLayout = () => {
       >
         <MobileHeader />
         <Outlet />
+        <Footer />
       </main>
 
       {currentTrack && (
