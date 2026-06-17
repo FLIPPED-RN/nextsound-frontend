@@ -219,6 +219,19 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
     } catch { toast.error('Не удалось удалить'); }
   };
 
+  const canDelete = !!user && (user.id === playlist?.userId || user.role === 'admin');
+  const handleDeletePlaylist = async () => {
+    if (!playlist) return;
+    if (!confirm(`Удалить плейлист «${playlist.name}»?`)) return;
+    try {
+      await playlistsApi.delete(playlist.id);
+      toast.success('Плейлист удалён');
+      qc.invalidateQueries({ queryKey: ['my-playlists'] });
+      qc.invalidateQueries({ queryKey: ['exclusive-playlists'] });
+      navigate('/playlists');
+    } catch { toast.error('Не удалось удалить плейлист'); }
+  };
+
   if (!playlist) return <div className="p-8 animate-pulse"><div className="h-8 w-48 bg-[#151515] rounded" /></div>;
 
   if (locked) {
@@ -259,11 +272,18 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
           <p className="text-xs tracking-widest text-[#666] uppercase mb-2">Плейлист</p>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight break-words">{playlist.name}</h1>
           <p className="text-sm text-[#888] mt-3">{tracks.length} {tracks.length === 1 ? 'трек' : 'треков'}</p>
-          {tracks.length > 0 && (
-            <button onClick={() => setTrack(tracks[0], tracks)} className="mt-4 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
-              <Play size={16} /> Слушать всё
-            </button>
-          )}
+          <div className="flex items-center gap-2 mt-4">
+            {tracks.length > 0 && (
+              <button onClick={() => setTrack(tracks[0], tracks)} className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
+                <Play size={16} /> Слушать всё
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={handleDeletePlaylist} title="Удалить плейлист" className="w-10 h-10 rounded-full border border-[#242424] flex items-center justify-center text-[#888] hover:text-red-400 hover:border-red-400/50 transition">
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
