@@ -23,6 +23,7 @@ export const LegalShell = ({ title, updated, children }: { title: string; update
       <div className="mt-12 pt-6 border-t border-[#1a1a1a] flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#888]">
         <Link to="/privacy" className="hover:text-white transition">Политика конфиденциальности</Link>
         <Link to="/terms" className="hover:text-white transition">Пользовательское соглашение</Link>
+        <Link to="/offer" className="hover:text-white transition">Публичная оферта</Link>
         <Link to="/recommendations" className="hover:text-white transition">Рекомендательные технологии</Link>
       </div>
     </div>
