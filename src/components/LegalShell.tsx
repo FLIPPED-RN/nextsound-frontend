@@ -24,6 +24,7 @@ export const LegalShell = ({ title, updated, children }: { title: string; update
         <Link to="/privacy" className="hover:text-white transition">Политика конфиденциальности</Link>
         <Link to="/terms" className="hover:text-white transition">Пользовательское соглашение</Link>
         <Link to="/offer" className="hover:text-white transition">Публичная оферта</Link>
+        <Link to="/payment" className="hover:text-white transition">Оплата и возврат</Link>
         <Link to="/recommendations" className="hover:text-white transition">Рекомендательные технологии</Link>
       </div>
     </div>

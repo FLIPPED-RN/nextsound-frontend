@@ -4,6 +4,7 @@ const links = [
   { to: '/privacy', label: 'Политика конфиденциальности' },
   { to: '/terms', label: 'Пользовательское соглашение' },
   { to: '/offer', label: 'Публичная оферта' },
+  { to: '/payment', label: 'Оплата и возврат' },
   { to: '/recommendations', label: 'Рекомендательные технологии' },
 ];
 
