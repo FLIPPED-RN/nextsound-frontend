@@ -13,6 +13,7 @@ import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { Waveform } from '../components/Waveform';
 import { VerifiedBadge } from '../components/VerifiedBadge';
+import { PlanBadge } from '../components/PlanBadge';
 import { TrackCard } from '../components/TrackCard';
 import { resolveAssetUrl, formatCount, formatTime, formatDate, timeAgo, getImageAccent, buildWaveGradient } from '@/lib/utils';
 import type { Comment, Track } from '@/types';
@@ -353,6 +354,7 @@ export const TrackPage = () => {
             </div>
             <span className="text-sm font-medium group-hover:underline">{artistName}</span>
             <VerifiedBadge verified={track.user?.isArtistVerified} />
+            <PlanBadge user={track.user} />
             {track.featuring && <span className="text-sm text-[#888]">feat. {track.featuring}</span>}
             <span className="text-sm text-[#666]">·</span>
             <span className="text-sm text-[#666]">{year}</span>
