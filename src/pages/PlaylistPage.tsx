@@ -144,7 +144,9 @@ const PlaylistCard = ({ playlist, view, onOpen }: { playlist: Playlist; view: 'g
     queryFn: () => playlistsApi.getTracks(playlist.id).then((r) => r.data),
   });
   const tracks = extractTracks(data);
-  const cover = tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
+  const cover = playlist.cover_path
+    ? resolveAssetUrl(playlist.cover_path)
+    : (tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '');
   const meta = `${tracks.length} ${tracks.length === 1 ? 'трек' : 'треков'}`;
 
   const playAll = (e: React.MouseEvent) => { e.stopPropagation(); if (tracks.length) setTrack(tracks[0], tracks); };
@@ -255,7 +257,9 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
     );
   }
 
-  const cover = tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '';
+  const cover = playlist.cover_path
+    ? resolveAssetUrl(playlist.cover_path)
+    : (tracks[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : '');
 
   return (
     <div className="px-4 md:px-8 py-6">
