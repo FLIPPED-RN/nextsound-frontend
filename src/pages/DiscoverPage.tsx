@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Crown, Lock } from 'lucide-react';
+import { Play, Crown, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
 import { albumsApi } from '../api/albums.api';
 import { playlistsApi } from '../api/playlists.api';
@@ -14,16 +14,31 @@ import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 import type { Track, User } from '@/types';
 
-const Section = ({ title, tracks, loading }: { title: string; tracks?: Track[]; loading: boolean }) => {
-  const list = (tracks || []).slice(0, 10);
+const RowHeader = ({ title, scrollRef }: { title: React.ReactNode; scrollRef: React.RefObject<HTMLDivElement | null> }) => {
+  const scroll = (dir: number) => scrollRef.current?.scrollBy({ left: dir * 520, behavior: 'smooth' });
   return (
-    <section className="space-y-4">
+    <div className="flex items-center justify-between">
       <h2 className="text-2xl font-bold">{title}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="hidden md:flex gap-1.5">
+        <button onClick={() => scroll(-1)} aria-label="Назад" className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center text-[#999] hover:text-white hover:border-white/40 transition"><ChevronLeft size={16} /></button>
+        <button onClick={() => scroll(1)} aria-label="Вперёд" className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center text-[#999] hover:text-white hover:border-white/40 transition"><ChevronRight size={16} /></button>
+      </div>
+    </div>
+  );
+};
+
+const Section = ({ title, tracks, loading }: { title: React.ReactNode; tracks?: Track[]; loading: boolean }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const list = (tracks || []).slice(0, 12);
+  if (!loading && !list.length) return null;
+  return (
+    <section className="space-y-3">
+      <RowHeader title={title} scrollRef={ref} />
+      <div ref={ref} className="ns-row flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
         {loading
-          ? Array(5).fill(0).map((_, i) => <div key={i} className="aspect-square bg-[#151515] rounded-2xl animate-pulse" />)
-          : list.map((t, i) => (
-            <div key={t.id} className={i >= 8 ? 'hidden lg:block' : ''}>
+          ? Array(6).fill(0).map((_, i) => <div key={i} className="w-40 sm:w-44 shrink-0 aspect-square bg-[#151515] rounded-2xl animate-pulse" />)
+          : list.map((t) => (
+            <div key={t.id} className="w-40 sm:w-44 shrink-0 snap-start">
               <TrackCard track={t} />
             </div>
           ))}
@@ -66,13 +81,14 @@ const NewArtists = ({ artists }: { artists: { user: User; count: number }[] }) =
 
 const AlbumsRow = ({ albums }: { albums?: Album[] }) => {
   const navigate = useNavigate();
+  const ref = useRef<HTMLDivElement>(null);
   if (!albums?.length) return null;
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">Новые альбомы</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {albums.slice(0, 12).map((a) => (
-          <button key={a.id} onClick={() => navigate(`/album/${a.id}`)} className="text-left group">
+    <section className="space-y-3">
+      <RowHeader title="Новые альбомы" scrollRef={ref} />
+      <div ref={ref} className="ns-row flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+        {albums.slice(0, 14).map((a) => (
+          <button key={a.id} onClick={() => navigate(`/album/${a.id}`)} className="text-left group w-40 sm:w-44 shrink-0 snap-start">
             <div className="aspect-square rounded-2xl overflow-hidden bg-[#151515]">
               <img src={resolveAssetUrl(a.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-full h-full object-cover group-hover:scale-105 transition" />
             </div>
@@ -87,13 +103,14 @@ const AlbumsRow = ({ albums }: { albums?: Album[] }) => {
 
 const ExclusiveRow = ({ playlists }: { playlists?: Playlist[] }) => {
   const navigate = useNavigate();
+  const ref = useRef<HTMLDivElement>(null);
   if (!playlists?.length) return null;
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold flex items-center gap-2"><Crown size={20} className="text-violet-400" /> Эксклюзив</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {playlists.slice(0, 12).map((p) => (
-          <button key={p.id} onClick={() => navigate(`/playlists/${p.id}`)} className="text-left group">
+    <section className="space-y-3">
+      <RowHeader title={<span className="flex items-center gap-2"><Crown size={20} className="text-violet-400" /> Эксклюзив</span>} scrollRef={ref} />
+      <div ref={ref} className="ns-row flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+        {playlists.slice(0, 14).map((p) => (
+          <button key={p.id} onClick={() => navigate(`/playlists/${p.id}`)} className="text-left group w-40 sm:w-44 shrink-0 snap-start">
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-violet-600/40 to-blue-600/30">
               {p.cover_path && <img src={resolveAssetUrl(p.cover_path)} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} className="w-full h-full object-cover group-hover:scale-105 transition" />}
               <span className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur flex items-center justify-center"><Lock size={13} className="text-violet-300" /></span>

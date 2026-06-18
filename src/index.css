@@ -68,3 +68,9 @@ body {
   white-space: nowrap;
   animation: ns-marquee 9s linear infinite;
 }
+
+.ns-row {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.ns-row::-webkit-scrollbar { display: none; }
