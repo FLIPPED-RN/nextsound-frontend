@@ -1,15 +1,41 @@
-import { Check, Crown, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Check, Crown, Sparkles, LoaderCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
+import { paymentsApi } from '../api/payments.api';
 import { PLANS, PLAN_LABELS, effectivePlan } from '../lib/plans';
 
 export const PremiumPage = () => {
-  const { user } = useAuthStore();
+  const { user, fetchMe } = useAuthStore();
   const current = effectivePlan(user);
+  const [params, setParams] = useSearchParams();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const subscribe = (planId: string) => {
+  useEffect(() => {
+    if (params.get('paid') === '1') {
+      toast.success('Оплата получена! Активируем подписку…', { duration: 5000 });
+      let tries = 0;
+      const tick = () => { fetchMe(); if (++tries < 5) setTimeout(tick, 2500); };
+      tick();
+      params.delete('paid');
+      setParams(params, { replace: true });
+    }
+  }, []);
+
+  const subscribe = async (planId: string) => {
     if (current === planId) { toast('Это ваш текущий тариф'); return; }
-    toast('Онлайн-оплата скоро будет подключена. Для оформления напишите на info@24nextsound.ru', { duration: 5000 });
+    if (!user) { toast.error('Войдите, чтобы оформить подписку'); return; }
+    setLoadingPlan(planId);
+    try {
+      const { data } = await paymentsApi.createPayment(planId);
+      if (data.url) window.location.href = data.url;
+      else toast.error('Не удалось получить ссылку на оплату');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Не удалось перейти к оплате');
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   return (
@@ -53,10 +79,10 @@ export const PremiumPage = () => {
               </ul>
               <button
                 onClick={() => subscribe(p.id)}
-                disabled={isCurrent}
-                className={`w-full py-3 rounded-full text-sm font-semibold transition disabled:opacity-60 ${p.featured ? 'bg-violet-500 hover:bg-violet-400 text-white' : 'bg-white text-black hover:opacity-90'}`}
+                disabled={isCurrent || loadingPlan === p.id}
+                className={`w-full py-3 rounded-full text-sm font-semibold transition disabled:opacity-60 flex items-center justify-center gap-2 ${p.featured ? 'bg-violet-500 hover:bg-violet-400 text-white' : 'bg-white text-black hover:opacity-90'}`}
               >
-                {isCurrent ? 'Ваш тариф' : 'Оформить'}
+                {loadingPlan === p.id ? <LoaderCircle size={16} className="animate-spin" /> : isCurrent ? 'Ваш тариф' : 'Оформить'}
               </button>
             </div>
           );

@@ -69,7 +69,7 @@ export const VerifyForm = ({ email, autoSend, onBack }: { email: string; autoSen
           onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
           inputMode="numeric"
           autoFocus
-          placeholder="••••••"
+          placeholder=""
           className="w-full text-center text-3xl tracking-[0.5em] font-bold py-4 bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl outline-none transition focus:border-violet-500/60 placeholder:text-[#333]"
         />
         <button
