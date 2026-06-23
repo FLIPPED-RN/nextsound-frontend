@@ -265,6 +265,11 @@ export const ArtistPage = () => {
             <Play size={16} /> Слушать всё
           </button>
           {isOwn && (
+            <button onClick={() => navigate('/stats')} title="Статистика" className="w-10 h-10 rounded-full border border-[#242424] flex items-center justify-center text-[#888] hover:text-violet-300 hover:border-violet-400/50 transition shrink-0">
+              <BarChart3 size={16} />
+            </button>
+          )}
+          {isOwn && (
             <button onClick={handleLogout} title="Выйти" className="w-10 h-10 rounded-full border border-[#242424] flex items-center justify-center text-[#888] hover:text-red-400 hover:border-red-400/50 transition shrink-0">
               <LogOut size={16} />
             </button>

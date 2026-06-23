@@ -94,7 +94,7 @@ const AreaChart = ({ data }: { data: { date: string; count: number }[] }) => {
       {hover !== null && (
         <div
           className="absolute -top-1 px-2.5 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#333] text-xs pointer-events-none shadow-xl whitespace-nowrap"
-          style={{ left: `${(hover / (n - 1)) * 100}%`, transform: 'translateX(-50%)' }}
+          style={{ left: `${Math.min(88, Math.max(12, (hover / (n - 1)) * 100))}%`, transform: 'translateX(-50%)' }}
         >
           <span className="text-white font-bold">{formatNumber(data[hover].count)}</span>
           <span className="text-[#888] ml-1.5">{fmt(data[hover].date)}</span>

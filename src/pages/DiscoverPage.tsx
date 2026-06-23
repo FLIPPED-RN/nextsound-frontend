@@ -19,7 +19,7 @@ const RowHeader = ({ title, scrollRef }: { title: React.ReactNode; scrollRef: Re
   const scroll = (dir: number) => scrollRef.current?.scrollBy({ left: dir * 520, behavior: 'smooth' });
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-2xl font-bold">{title}</h2>
+      <h2 className="text-lg md:text-2xl font-bold">{title}</h2>
       <div className="hidden md:flex gap-1.5">
         <button onClick={() => scroll(-1)} aria-label="Назад" className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center text-[#999] hover:text-white hover:border-white/40 transition"><ChevronLeft size={16} /></button>
         <button onClick={() => scroll(1)} aria-label="Вперёд" className="w-8 h-8 rounded-full border border-[#242424] flex items-center justify-center text-[#999] hover:text-white hover:border-white/40 transition"><ChevronRight size={16} /></button>
@@ -52,8 +52,8 @@ const NewArtists = ({ artists }: { artists: { user: User; count: number }[] }) =
   const navigate = useNavigate();
   if (!artists.length) return null;
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">Новые имена</h2>
+    <section className="space-y-3">
+      <h2 className="text-lg md:text-2xl font-bold">Новые имена</h2>
       <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
         {artists.map(({ user, count }) => (
           <button
@@ -180,46 +180,56 @@ export const DiscoverPage = () => {
   }, [tracks]);
 
   return (
-    <div className="px-4 md:px-8 py-6 space-y-10">
+    <div className="px-4 md:px-8 py-5 space-y-8">
       <button
         onClick={startFlow}
         disabled={flowLoading}
-        className="relative w-full overflow-hidden rounded-3xl p-6 md:p-7 text-left flex items-center gap-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:brightness-110 transition disabled:opacity-70"
+        className="group relative w-full overflow-hidden rounded-2xl px-4 py-3.5 md:px-6 md:py-5 text-left flex items-center gap-3.5 md:gap-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:brightness-110 transition disabled:opacity-70"
       >
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">
-          {flowLoading ? <LoaderCircle size={28} className="animate-spin text-white" /> : <Waves size={30} className="text-white" />}
+        <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">
+          {flowLoading ? <LoaderCircle size={24} className="animate-spin text-white" /> : <Waves size={26} className="text-white" />}
         </div>
-        <div className="min-w-0">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-white">Поток</h2>
-          <p className="text-white/85 text-sm md:text-base">Бесконечная волна музыки, подобранная под тебя — нажми и слушай</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg md:text-2xl font-extrabold text-white leading-tight">Поток</h2>
+          <p className="text-white/80 text-xs md:text-sm leading-snug">Бесконечная волна музыки под тебя — нажми и слушай</p>
         </div>
-        <span className="ml-auto hidden sm:flex w-12 h-12 rounded-full bg-white text-black items-center justify-center shrink-0">
-          <Play size={20} className="ml-0.5" />
+        <span className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-black flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+          <Play size={18} className="ml-0.5" />
         </span>
       </button>
 
       {featured && (
-        <div className="relative overflow-hidden rounded-3xl">
-          <img src={resolveAssetUrl(featured.cover_path)} alt="" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/30" />
-          <div className="relative flex flex-col sm:flex-row items-start sm:items-end gap-6 p-6 md:p-10">
-            <img
-              src={resolveAssetUrl(featured.cover_path)}
-              alt={featured.title}
-              onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }}
-              className="w-36 h-36 md:w-44 md:h-44 rounded-2xl object-cover shadow-2xl bg-[#151515] shrink-0"
-            />
-            <div className="min-w-0">
-              <span className="text-xs tracking-widest text-violet-300 uppercase">Рекомендуем</span>
-              <h1 className="text-3xl md:text-5xl font-extrabold mt-2 truncate">{featured.title}</h1>
-              <p className="text-sm text-[#bbb] mt-2 flex items-center gap-1">
-                <span>{featured.user?.nickname || featured.user?.firstName}</span>
+        <div className="relative overflow-hidden rounded-2xl border border-white/5">
+          <img src={resolveAssetUrl(featured.cover_path)} alt="" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-35" />
+          <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black via-black/85 to-black/40" />
+          <div className="relative flex flex-row items-center sm:items-end gap-4 sm:gap-6 p-4 sm:p-8 md:p-10">
+            <button
+              onClick={() => setTrack(featured, tracks || [])}
+              className="group relative shrink-0 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl"
+              aria-label="Слушать"
+            >
+              <img
+                src={resolveAssetUrl(featured.cover_path)}
+                alt={featured.title}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }}
+                className="w-24 h-24 sm:w-40 sm:h-40 md:w-44 md:h-44 object-cover bg-[#151515]"
+              />
+              <span className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                <span className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center"><Play size={20} className="ml-0.5" /></span>
+              </span>
+            </button>
+            <div className="min-w-0 flex-1">
+              <span className="inline-flex items-center gap-1.5 text-[10px] md:text-xs font-semibold tracking-wide text-violet-200 bg-violet-500/20 px-2.5 py-1 rounded-full">✦ Рекомендуем</span>
+              <h1 className="text-xl sm:text-4xl md:text-5xl font-extrabold mt-2 sm:mt-3 line-clamp-2 sm:truncate leading-tight">{featured.title}</h1>
+              <p className="text-xs sm:text-sm text-[#bbb] mt-1.5 flex items-center gap-1 flex-wrap">
+                <span className="truncate max-w-[140px] sm:max-w-none">{featured.user?.nickname || featured.user?.firstName}</span>
                 <VerifiedBadge verified={featured.user?.isArtistVerified} />
-                <span>· {formatCount(featured.plays_count)} прослушиваний</span>
+                <span className="text-[#777]">· {formatCount(featured.plays_count)} прослуш.</span>
+                {featured.genre && <span className="text-violet-300/80 hidden sm:inline">· {featured.genre}</span>}
               </p>
               <button
                 onClick={() => setTrack(featured, tracks || [])}
-                className="mt-5 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition"
+                className="mt-3 sm:mt-5 px-5 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition"
               >
                 <Play size={16} /> Слушать
               </button>
@@ -228,13 +238,13 @@ export const DiscoverPage = () => {
         </div>
       )}
 
+      {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       {!!trending?.length && <Section title="🔥 В тренде за неделю" tracks={trending} loading={trendingLoading} />}
       <ExclusiveRow playlists={exclusive} />
-      <AlbumsRow albums={recentAlbums} />
-      {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       <NewArtists artists={newArtists} />
       <Section title="Новое" tracks={tracks} loading={isLoading} />
       <Section title="Популярное" tracks={popular} loading={isLoading} />
+      <AlbumsRow albums={recentAlbums} />
 
       {!isLoading && !tracks?.length && (
         <div className="text-center py-20 text-[#666]">
