@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Search, Upload, ListMusic, Heart, ShieldCheck, Crown } from 'lucide-react';
+import { Home, Search, Upload, ListMusic, Heart, ShieldCheck, Crown, BarChart3 } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl } from '../lib/utils';
 import { NotificationBell } from './NotificationBell';
@@ -10,6 +10,7 @@ const links = [
   { to: '/upload', icon: Upload, label: 'Загрузить' },
   { to: '/playlists', icon: ListMusic, label: 'Плейлисты' },
   { to: '/liked', icon: Heart, label: 'Любимое' },
+  { to: '/stats', icon: BarChart3, label: 'Статистика' },
   { to: '/premium', icon: Crown, label: 'Premium' },
 ];
 
