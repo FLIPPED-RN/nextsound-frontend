@@ -285,13 +285,13 @@ export const ArtistPage = () => {
 
       <div className="px-4 md:px-8 mt-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setTab('tracks')} className={`text-2xl font-bold transition ${tab === 'tracks' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Треки</button>
+          <div className="flex items-center gap-4 overflow-x-auto ns-row -mx-1 px-1">
+            <button onClick={() => setTab('tracks')} className={`text-xl sm:text-2xl font-bold transition shrink-0 ${tab === 'tracks' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Треки</button>
             {!!albums?.length && (
-              <button onClick={() => setTab('albums')} className={`text-2xl font-bold transition ${tab === 'albums' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Альбомы</button>
+              <button onClick={() => setTab('albums')} className={`text-xl sm:text-2xl font-bold transition shrink-0 ${tab === 'albums' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Альбомы</button>
             )}
-            <button onClick={() => setTab('reposts')} className={`text-2xl font-bold transition ${tab === 'reposts' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Репосты</button>
-            <button onClick={() => setTab('collection')} className={`text-2xl font-bold transition ${tab === 'collection' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Коллекция</button>
+            <button onClick={() => setTab('reposts')} className={`text-xl sm:text-2xl font-bold transition shrink-0 ${tab === 'reposts' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Репосты</button>
+            <button onClick={() => setTab('collection')} className={`text-xl sm:text-2xl font-bold transition shrink-0 ${tab === 'collection' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Коллекция</button>
           </div>
           {tab === 'tracks' && (
             <div className="flex items-center gap-1 text-sm flex-wrap">
