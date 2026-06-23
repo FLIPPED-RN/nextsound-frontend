@@ -86,7 +86,7 @@ export const PixelAchievements = ({ achievements, unlockedCount, total, progress
   const byRar = (t: keyof typeof RARITY) => achievements.filter((a) => a.unlocked && (RARITY_OF[a.id] || 'common') === t).length;
 
   return (
-    <div className="space-y-7 w-full overflow-x-hidden">
+    <div className="space-y-7 w-full">
       {/* Hero / trophy room */}
       <div className="relative overflow-hidden rounded-2xl border border-[#242424] bg-gradient-to-br from-violet-600/15 via-[#0e0e0e] to-fuchsia-600/10 p-5 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
         <svg width="92" height="92" viewBox="0 0 84 84" className="shrink-0">

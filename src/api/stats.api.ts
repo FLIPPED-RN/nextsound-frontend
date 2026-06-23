@@ -11,6 +11,17 @@ export interface ArtistStats {
     comments: number;
     reposts: number;
   };
+  trends: {
+    playsToday: number;
+    plays7d: number;
+    plays30d: number;
+    playsTrend: number;
+    listeners7d: number;
+    followers7d: number;
+    followersTrend: number;
+    avgPerTrack: number;
+    engagementRate: number;
+  };
   topTracks: { id: number; title: string; cover_path?: string; plays_count: number }[];
   playsByDay: { date: string; count: number }[] | null;
   recentListeners: { id: number; nickname?: string; firstName?: string; avatar?: string }[] | null;
