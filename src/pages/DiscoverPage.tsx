@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Crown, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Crown, Lock, ChevronLeft, ChevronRight, Waves, LoaderCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
 import { albumsApi } from '../api/albums.api';
 import { playlistsApi } from '../api/playlists.api';
@@ -148,6 +149,20 @@ export const DiscoverPage = () => {
     queryFn: () => playlistsApi.getExclusive().then((r) => r.data),
   });
   const { setTrack } = usePlayerStore();
+  const [flowLoading, setFlowLoading] = useState(false);
+
+  const startFlow = async () => {
+    setFlowLoading(true);
+    try {
+      const { data } = await tracksApi.getFlow();
+      if (data.length) { setTrack(data[0], data); toast('🌊 Поток запущен'); }
+      else toast.error('Пока нет треков для потока');
+    } catch {
+      toast.error('Не удалось запустить Поток');
+    } finally {
+      setFlowLoading(false);
+    }
+  };
 
   const featured = tracks?.find((t) => t.isFeatured) || tracks?.[0];
   const popular = useMemo(() => (tracks ? [...tracks].sort((a, b) => b.plays_count - a.plays_count) : []), [tracks]);
@@ -166,6 +181,23 @@ export const DiscoverPage = () => {
 
   return (
     <div className="px-4 md:px-8 py-6 space-y-10">
+      <button
+        onClick={startFlow}
+        disabled={flowLoading}
+        className="relative w-full overflow-hidden rounded-3xl p-6 md:p-7 text-left flex items-center gap-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:brightness-110 transition disabled:opacity-70"
+      >
+        <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">
+          {flowLoading ? <LoaderCircle size={28} className="animate-spin text-white" /> : <Waves size={30} className="text-white" />}
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-white">Поток</h2>
+          <p className="text-white/85 text-sm md:text-base">Бесконечная волна музыки, подобранная под тебя — нажми и слушай</p>
+        </div>
+        <span className="ml-auto hidden sm:flex w-12 h-12 rounded-full bg-white text-black items-center justify-center shrink-0">
+          <Play size={20} className="ml-0.5" />
+        </span>
+      </button>
+
       {featured && (
         <div className="relative overflow-hidden rounded-3xl">
           <img src={resolveAssetUrl(featured.cover_path)} alt="" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-40" />
