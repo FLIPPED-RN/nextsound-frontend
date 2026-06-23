@@ -39,7 +39,7 @@ const Card = ({ a, i }: { a: Achievement; i: number }) => {
       viewport={{ once: true }}
       transition={{ duration: 0.32, delay: (i % 10) * 0.035 }}
       whileHover={{ scale: 1.06, y: -2 }}
-      className={`relative overflow-hidden rounded-xl p-3 flex flex-col items-center text-center ${a.unlocked ? 'ach-shine' : ''} ${a.unlocked && legendary ? 'ach-gold' : ''}`}
+      className={`relative overflow-hidden rounded-xl p-3 min-w-0 flex flex-col items-center text-center ${a.unlocked ? 'ach-shine' : ''} ${a.unlocked && legendary ? 'ach-gold' : ''}`}
       style={{
         border: `2px solid ${a.unlocked ? r.color : '#262626'}`,
         background: a.unlocked ? r.soft : '#0b0b0b',
@@ -56,7 +56,7 @@ const Card = ({ a, i }: { a: Achievement; i: number }) => {
       <div className={`text-4xl leading-none mt-3 mb-2 transition ${a.unlocked ? 'drop-shadow-lg' : 'grayscale opacity-20'}`}>
         {a.emoji}
       </div>
-      <p className="font-pixel text-[8px] text-white/90 min-h-[26px] flex items-center justify-center">{a.title}</p>
+      <p className="font-pixel text-[8px] text-white/90 leading-relaxed break-words w-full min-h-[26px] flex items-center justify-center">{a.title}</p>
 
       {a.unlocked ? (
         <p className="font-pixel text-[7px] mt-1.5" style={{ color: r.color }}>{a.premium ? '★ PREMIUM' : '✓ ОТКРЫТО'}</p>
@@ -84,9 +84,9 @@ export const PixelAchievements = ({ achievements, unlockedCount, total }: {
   const byRar = (t: keyof typeof RARITY) => achievements.filter((a) => a.unlocked && (RARITY_OF[a.id] || 'common') === t).length;
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-7 w-full overflow-x-hidden">
       {/* Hero / trophy room */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#242424] bg-gradient-to-br from-violet-600/15 via-[#0e0e0e] to-fuchsia-600/10 p-5 flex items-center gap-5">
+      <div className="relative overflow-hidden rounded-2xl border border-[#242424] bg-gradient-to-br from-violet-600/15 via-[#0e0e0e] to-fuchsia-600/10 p-5 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
         <svg width="92" height="92" viewBox="0 0 84 84" className="shrink-0">
           <circle cx="42" cy="42" r={R} stroke="#1f1f1f" strokeWidth="8" fill="none" />
           <circle cx="42" cy="42" r={R} stroke="url(#ringg)" strokeWidth="8" fill="none" strokeLinecap="round"
@@ -98,7 +98,7 @@ export const PixelAchievements = ({ achievements, unlockedCount, total }: {
           <p className="font-pixel text-[9px] text-[#888] mb-1">РАНГ</p>
           <h3 className="font-pixel text-[13px] text-white leading-relaxed">{rankOf(overall)}</h3>
           <p className="text-sm text-[#aaa] mt-2">Открыто <span className="text-white font-semibold">{unlockedCount}</span> из {total} достижений</p>
-          <div className="flex gap-3 mt-2 text-xs">
+          <div className="flex flex-wrap gap-3 mt-2 text-xs justify-center sm:justify-start">
             {(['legendary', 'epic', 'rare', 'common'] as const).map((t) => (
               <span key={t} className="inline-flex items-center gap-1" style={{ color: RARITY[t].color }}>
                 <span className="w-2 h-2 rounded-sm" style={{ background: RARITY[t].color }} /> {byRar(t)}
@@ -114,11 +114,11 @@ export const PixelAchievements = ({ achievements, unlockedCount, total }: {
         const got = items.filter((a) => a.unlocked).length;
         return (
           <div key={c.key} className="space-y-3">
-            <h3 className="font-pixel text-[10px] text-[#999] flex items-center gap-2">
+            <h3 className="font-pixel text-[10px] text-[#999] flex flex-wrap items-center gap-2">
               <span>{c.icon}</span> {c.label.toUpperCase()}
               <span className="text-violet-300">{got}/{items.length}</span>
             </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {items.map((a, i) => <Card key={a.id} a={a} i={i} />)}
             </div>
           </div>
