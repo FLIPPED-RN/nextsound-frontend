@@ -74,7 +74,6 @@ export const ArtistPage = () => {
   const { data: achv } = useQuery({
     queryKey: ['achievements', userId, isOwn],
     queryFn: () => (isOwn ? achievementsApi.mine() : achievementsApi.ofUser(userId)).then((r) => r.data),
-    enabled: tab === 'collection',
   });
   useEffect(() => {
     achv?.newly?.forEach((a) => toast(`🏆 Достижение: ${a.title}!`, { duration: 5000 }));
@@ -231,6 +230,12 @@ export const ArtistPage = () => {
               </span>
             )}
             <PlanBadge user={displayArtist} size="md" />
+            {achv?.progress && (
+              <span className="font-pixel text-[8px] text-fuchsia-200 bg-black/45 backdrop-blur px-2.5 py-1.5 rounded-full">LVL {achv.progress.level}</span>
+            )}
+            {!!achv?.progress?.streak && (
+              <span className="text-sm font-semibold bg-black/45 backdrop-blur px-2.5 py-1 rounded-full">🔥 {achv.progress.streak}</span>
+            )}
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg break-words">{name}</h1>
         </div>
@@ -366,7 +371,7 @@ export const ArtistPage = () => {
         {tab === 'collection' && (
           <div className="mt-2">
             {achv
-              ? <PixelAchievements achievements={achv.achievements} unlockedCount={achv.unlockedCount} total={achv.total} />
+              ? <PixelAchievements achievements={achv.achievements} unlockedCount={achv.unlockedCount} total={achv.total} progress={achv.progress} />
               : <p className="text-sm text-[#666] py-6 font-pixel text-[10px]">ЗАГРУЗКА…</p>}
           </div>
         )}

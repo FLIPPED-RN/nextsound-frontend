@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import type { Achievement } from '@/types';
+import type { Progress } from '@/api/achievements.api';
 
 const RARITY = {
   common: { label: 'ОБЫЧНОЕ', color: '#8b95a1', soft: 'rgba(139,149,161,0.10)' },
@@ -74,10 +75,11 @@ const Card = ({ a, i }: { a: Achievement; i: number }) => {
   );
 };
 
-export const PixelAchievements = ({ achievements, unlockedCount, total }: {
+export const PixelAchievements = ({ achievements, unlockedCount, total, progress }: {
   achievements: Achievement[];
   unlockedCount: number;
   total: number;
+  progress?: Progress;
 }) => {
   const overall = total ? Math.round((unlockedCount / total) * 100) : 0;
   const R = 34, C = 2 * Math.PI * R, off = C * (1 - overall / 100);
@@ -105,6 +107,22 @@ export const PixelAchievements = ({ achievements, unlockedCount, total }: {
               </span>
             ))}
           </div>
+
+          {progress && (
+            <div className="mt-3.5 space-y-1.5">
+              <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-start">
+                <span className="font-pixel text-[9px] text-fuchsia-300">УРОВЕНЬ {progress.level}</span>
+                {progress.streak > 0 && <span className="text-sm font-semibold">🔥 {progress.streak} дн.</span>}
+                {progress.subscriber && <span className="font-pixel text-[7px] text-yellow-300 border border-yellow-400/50 px-1 py-0.5 rounded">×2 XP</span>}
+              </div>
+              <div className="max-w-[280px] mx-auto sm:mx-0">
+                <div className="h-2.5 bg-[#1c1c1c] rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-fuchsia-500 to-violet-500" style={{ width: `${progress.pct}%` }} />
+                </div>
+                <p className="text-[10px] text-[#888] mt-1">{progress.intoLevel} / {progress.nextLevelXp} XP до {progress.level + 1} ур. · всего {progress.xp.toLocaleString('ru')} XP</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/auth.store';
+import { achievementsApi } from '../api/achievements.api';
 import { CookieConsent } from '../components/CookieConsent';
 
 const queryClient = new QueryClient({
@@ -16,7 +17,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!called.current) {
       called.current = true;
-      fetchMe();
+      fetchMe().then(() => {
+        if (useAuthStore.getState().user) achievementsApi.ping().catch(() => { });
+      });
     }
   }, []);
 
