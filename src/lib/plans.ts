@@ -18,15 +18,15 @@ export function isSubscriber(user?: PlanHolder | null): boolean {
 
 export const PLANS = [
   {
-    id: 'plus', name: 'Plus', price: 99, audience: 'для слушателей',
+    id: 'plus', name: 'Plus', price: 199, audience: 'для слушателей',
     perks: ['Доступ к эксклюзивным плейлистам', 'Скачивание в высоком качестве', 'Значок Plus в профиле'],
   },
   {
-    id: 'artist', name: 'Artist', price: 199, audience: 'для артистов',
+    id: 'artist', name: 'Artist', price: 399, audience: 'для артистов',
     perks: ['Всё из Plus', 'Загрузка до 50 треков, файл до 100 МБ', 'Значок Artist'],
   },
   {
-    id: 'pro', name: 'Pro', price: 299, audience: 'для артистов', featured: true,
+    id: 'pro', name: 'Pro', price: 599, audience: 'для артистов', featured: true,
     perks: ['Всё из Artist', 'Безлимит загрузок, файл до 200 МБ', 'Приоритет в рекомендациях, значок Pro'],
   },
 ];

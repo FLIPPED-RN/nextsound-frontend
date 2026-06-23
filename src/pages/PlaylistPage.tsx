@@ -250,7 +250,7 @@ const PlaylistDetail = ({ playlistId }: { playlistId: number }) => {
           <h1 className="text-2xl md:text-3xl font-extrabold mt-2">{playlist.name}</h1>
           <p className="text-[#9a9a9a] mt-3">Этот плейлист доступен по подписке NextSound Plus. Оформи подписку, чтобы слушать эксклюзивные подборки.</p>
           <button onClick={() => navigate('/premium')} className="mt-6 px-7 py-3 rounded-full bg-violet-500 hover:bg-violet-400 text-white font-semibold transition">
-            Оформить Plus за 99 ₽
+            Оформить Plus за 199 ₽
           </button>
         </div>
       </div>
