@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, AtSign, ArrowRight, LoaderCircle } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, User, AtSign, ArrowRight, LoaderCircle, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 import { AuthShell, AuthInput } from '../components/AuthShell';
@@ -16,6 +16,8 @@ export const RegisterPage = () => {
   const register = useAuthStore((s) => s.register);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const ref = searchParams.get('ref') || '';
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
@@ -31,6 +33,7 @@ export const RegisterPage = () => {
         consentPrivacy: true,
         consentTerms: true,
         consentMarketing: consents.marketing,
+        ...(ref ? { ref } : {}),
       });
       if (res.needVerification) {
         setPendingEmail(res.email || form.email);
@@ -57,6 +60,13 @@ export const RegisterPage = () => {
     <AuthShell>
       <h1 className="text-3xl font-bold">Создать аккаунт</h1>
       <p className="text-sm text-[#888] mt-2">Присоединяйтесь к сообществу NextSound</p>
+
+      {ref && (
+        <div className="mt-4 flex items-center gap-2.5 text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+          <Gift size={18} className="shrink-0" />
+          <span>Вы пришли по приглашению — после регистрации вы и пригласивший получите <b>+7 дней Plus</b> 🎁</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4 mt-8">
         {error && (

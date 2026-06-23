@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, UserPlus, Repeat2, MessageCircle, Heart, CornerDownRight, Music } from 'lucide-react';
+import { Bell, UserPlus, Repeat2, MessageCircle, Heart, CornerDownRight, Music, Gift } from 'lucide-react';
 import { notificationsApi } from '../api/notifications.api';
 import type { AppNotification } from '../api/notifications.api';
 import { useAuthStore } from '../store/auth.store';
@@ -15,6 +15,7 @@ const ICON: Record<string, React.ReactNode> = {
   comment_like: <Heart size={13} className="text-red-400" />,
   track_like: <Heart size={13} className="text-red-400" />,
   new_track: <Music size={13} className="text-violet-400" />,
+  gift: <Gift size={13} className="text-pink-400" />,
 };
 
 const text = (n: AppNotification) => {
@@ -28,6 +29,7 @@ const text = (n: AppNotification) => {
     case 'comment_like': return `${name} оценил ваш комментарий`;
     case 'track_like': return `${name} лайкнул ${t}`;
     case 'new_track': return `${name} выпустил новый трек ${t}`;
+    case 'gift': return `${name} подарил вам подписку 🎁`;
     default: return name;
   }
 };
@@ -72,7 +74,8 @@ export const NotificationBell = () => {
 
   const go = (n: AppNotification) => {
     setOpen(false);
-    if (n.trackId) navigate(`/track/${n.trackId}`);
+    if (n.type === 'gift') navigate('/premium');
+    else if (n.trackId) navigate(`/track/${n.trackId}`);
     else navigate(`/artist/${n.actorId}`);
   };
 

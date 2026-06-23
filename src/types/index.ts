@@ -126,6 +126,7 @@ export interface RegisterDto {
   consentPrivacy?: boolean;
   consentTerms?: boolean;
   consentMarketing?: boolean;
+  ref?: string;
 }
 
 export interface CreateTrackDto {

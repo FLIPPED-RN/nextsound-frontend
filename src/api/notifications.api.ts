@@ -3,7 +3,7 @@ import type { User } from '@/types';
 
 export interface AppNotification {
   id: number;
-  type: 'follow' | 'repost' | 'comment' | 'reply' | 'comment_like' | 'track_like' | 'new_track';
+  type: 'follow' | 'repost' | 'comment' | 'reply' | 'comment_like' | 'track_like' | 'new_track' | 'gift';
   actor: User;
   actorId: number;
   trackId?: number | null;
