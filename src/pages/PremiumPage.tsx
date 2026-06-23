@@ -66,6 +66,7 @@ export const PremiumPage = () => {
               )}
               <h3 className="text-xl font-bold">{p.name}</h3>
               <p className="text-xs text-[#777] mt-0.5">{p.audience}</p>
+              {(p as any).tagline && <p className="text-sm text-violet-300 font-medium mt-1.5">{(p as any).tagline}</p>}
               <div className="mt-4 mb-5">
                 <span className="text-4xl font-extrabold">{p.price} ₽</span>
                 <span className="text-sm text-[#777]"> / мес</span>

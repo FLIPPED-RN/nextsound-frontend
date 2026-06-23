@@ -4,6 +4,18 @@
 .font-pixel { font-family: 'Press Start 2P', monospace; line-height: 1.5; }
 .pixel-shadow { box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6); }
 
+@keyframes ach-shine { 0% { transform: translateX(-130%) skewX(-18deg); } 55%, 100% { transform: translateX(240%) skewX(-18deg); } }
+.ach-shine::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: translateX(-130%) skewX(-18deg);
+  animation: ach-shine 4s ease-in-out infinite; pointer-events: none;
+}
+@keyframes ach-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.ach-float { animation: ach-float 3s ease-in-out infinite; }
+@keyframes ach-gold { 0%,100% { box-shadow: 0 0 14px rgba(245,158,11,0.45), inset 0 0 12px rgba(245,158,11,0.15); } 50% { box-shadow: 0 0 26px rgba(245,158,11,0.8), inset 0 0 16px rgba(245,158,11,0.3); } }
+.ach-gold { animation: ach-gold 2.2s ease-in-out infinite; }
+
 * {
   font-family: 'Inter', sans-serif;
 }
