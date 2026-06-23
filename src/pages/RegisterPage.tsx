@@ -64,7 +64,7 @@ export const RegisterPage = () => {
       {ref && (
         <div className="mt-4 flex items-center gap-2.5 text-sm text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
           <Gift size={18} className="shrink-0" />
-          <span>Вы пришли по приглашению — после регистрации вы и пригласивший получите <b>+7 дней Plus</b> 🎁</span>
+          <span>Вы пришли по приглашению — после подтверждения почты вы и пригласивший получите <b>+7 дней Plus</b> 🎁</span>
         </div>
       )}
 
