@@ -79,6 +79,19 @@ export interface Album {
   plays?: number;
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  desc: string;
+  emoji: string;
+  category: 'listener' | 'artist' | 'social' | 'special';
+  premium: boolean;
+  target: number;
+  current: number;
+  unlocked: boolean;
+  unlockedNow?: boolean;
+}
+
 export interface Playlist {
   id: number;
   name: string;

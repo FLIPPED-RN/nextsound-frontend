@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 import { usersApi } from '../api/users.api';
 import { tracksApi } from '../api/tracks.api';
 import { albumsApi } from '../api/albums.api';
+import { achievementsApi } from '../api/achievements.api';
+import { PixelAchievements } from '../components/PixelAchievements';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
@@ -40,7 +42,7 @@ export const ArtistPage = () => {
 
   const { setTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
   const [sort, setSort] = useState<Sort>('popular');
-  const [tab, setTab] = useState<'tracks' | 'albums' | 'reposts'>('tracks');
+  const [tab, setTab] = useState<'tracks' | 'albums' | 'reposts' | 'collection'>('tracks');
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [showAll, setShowAll] = useState(false);
@@ -68,6 +70,15 @@ export const ArtistPage = () => {
     queryKey: ['albums', userId],
     queryFn: () => albumsApi.getByUser(userId).then((r) => r.data),
   });
+
+  const { data: achv } = useQuery({
+    queryKey: ['achievements', userId, isOwn],
+    queryFn: () => (isOwn ? achievementsApi.mine() : achievementsApi.ofUser(userId)).then((r) => r.data),
+    enabled: tab === 'collection',
+  });
+  useEffect(() => {
+    achv?.newly?.forEach((a) => toast(`🏆 Достижение: ${a.title}!`, { duration: 5000 }));
+  }, [achv]);
 
   const handleFollow = async () => {
     if (!me) { toast.error('Войдите, чтобы подписаться'); return; }
@@ -280,6 +291,7 @@ export const ArtistPage = () => {
               <button onClick={() => setTab('albums')} className={`text-2xl font-bold transition ${tab === 'albums' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Альбомы</button>
             )}
             <button onClick={() => setTab('reposts')} className={`text-2xl font-bold transition ${tab === 'reposts' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Репосты</button>
+            <button onClick={() => setTab('collection')} className={`text-2xl font-bold transition ${tab === 'collection' ? 'text-white' : 'text-[#555] hover:text-white'}`}>Коллекция</button>
           </div>
           {tab === 'tracks' && (
             <div className="flex items-center gap-1 text-sm flex-wrap">
@@ -348,6 +360,14 @@ export const ArtistPage = () => {
               />
             ))}
             {!reposts?.length && <p className="text-sm text-[#666] py-6">Пока нет репостов.</p>}
+          </div>
+        )}
+
+        {tab === 'collection' && (
+          <div className="mt-2">
+            {achv
+              ? <PixelAchievements achievements={achv.achievements} unlockedCount={achv.unlockedCount} total={achv.total} />
+              : <p className="text-sm text-[#666] py-6 font-pixel text-[10px]">ЗАГРУЗКА…</p>}
           </div>
         )}
       </div>
