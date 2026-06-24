@@ -4,7 +4,7 @@ import { Check, Crown, Sparkles, LoaderCircle, Gift, Copy, Users, X } from 'luci
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 import { paymentsApi } from '../api/payments.api';
-import { PLANS, PLAN_LABELS, effectivePlan } from '../lib/plans';
+import { PLANS, PLAN_LABELS, FREE_PERKS, effectivePlan } from '../lib/plans';
 
 export const PremiumPage = () => {
   const { user, fetchMe } = useAuthStore();
@@ -85,6 +85,25 @@ export const PremiumPage = () => {
             <Crown size={14} /> Ваш тариф: {PLAN_LABELS[current]}
           </p>
         )}
+      </div>
+
+      <div className="mb-6 rounded-3xl border border-[#242424] bg-[#0c0c0c] p-5 md:p-6">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xl font-bold">Free</h3>
+            <span className="text-xs text-[#777]">— навсегда бесплатно</span>
+          </div>
+          {current === 'free'
+            ? <span className="text-xs font-semibold bg-white/10 text-white px-3 py-1 rounded-full">Ваш тариф</span>
+            : <span className="text-2xl font-extrabold">0 ₽</span>}
+        </div>
+        <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5">
+          {FREE_PERKS.map((perk) => (
+            <li key={perk} className="flex items-start gap-2 text-sm text-[#cfcfcf]">
+              <Check size={16} className="text-emerald-400 shrink-0 mt-0.5" /> {perk}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

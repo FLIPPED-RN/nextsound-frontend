@@ -9,6 +9,7 @@ export interface User {
   banner?: string;
   links?: string;
   bio?: string;
+  themeColor?: string | null;
   plan?: string;
   planExpires?: string | null;
   isVerified?: boolean;
@@ -31,6 +32,7 @@ export interface UpdateProfileDto {
   nickname?: string;
   bio?: string;
   links?: string;
+  themeColor?: string | null;
 }
 
 export interface Track {

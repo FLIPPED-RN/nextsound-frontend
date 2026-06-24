@@ -13,6 +13,9 @@ import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
 import { PlanBadge } from '../components/PlanBadge';
+import { isSubscriber } from '../lib/plans';
+
+const THEME_PALETTE = ['#a855f7', '#6366f1', '#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
 import type { Track, User } from '@/types';
 
 type Sort = 'popular' | 'latest' | 'oldest';
@@ -145,6 +148,7 @@ export const ArtistPage = () => {
       ? resolveAssetUrl(displayArtist.avatar)
       : (tracks?.[0]?.cover_path ? resolveAssetUrl(tracks[0].cover_path) : ''));
   const memberSince = new Date(displayArtist.created_at).getFullYear() || new Date().getFullYear();
+  const accent = isSubscriber(displayArtist) ? displayArtist.themeColor || null : null;
 
   let socials: { key: string; label: string; url: string }[] = [];
   try {
@@ -194,10 +198,13 @@ export const ArtistPage = () => {
       <div className="relative h-64 md:h-80">
         {banner ? (
           <img src={banner} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : accent ? (
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}66, ${accent}1a 45%, #000)` }} />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-violet-700/40 via-blue-700/30 to-black" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
+        {accent && <div className="absolute inset-x-0 bottom-0 h-40 pointer-events-none" style={{ background: `linear-gradient(to top, ${accent}40, transparent)` }} />}
 
         {isOwn && (
           <>
@@ -237,7 +244,7 @@ export const ArtistPage = () => {
               <span className="text-sm font-semibold bg-black/45 backdrop-blur px-2.5 py-1 rounded-full">🔥 {achv.progress.streak}</span>
             )}
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg break-words">{name}</h1>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg break-words" style={accent ? { textShadow: `0 2px 30px ${accent}99` } : undefined}>{name}</h1>
         </div>
       </div>
 
@@ -421,6 +428,8 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
     nickname: user?.nickname || '',
     bio: user?.bio || '',
   });
+  const canTheme = isSubscriber(user);
+  const [themeColor, setThemeColor] = useState<string | null>(user?.themeColor || null);
   const parsedLinks = (() => { try { return user?.links ? JSON.parse(user.links) : {}; } catch { return {}; } })();
   const [links, setLinks] = useState({
     telegram: parsedLinks.telegram || '',
@@ -439,7 +448,7 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
     setSaving(true);
     try {
       const cleanLinks = Object.fromEntries(Object.entries(links).filter(([, v]) => (v as string).trim()));
-      await updateProfile({ ...form, links: JSON.stringify(cleanLinks) });
+      await updateProfile({ ...form, links: JSON.stringify(cleanLinks), ...(canTheme ? { themeColor } : {}) });
       toast.success('Профиль обновлён');
       onClose();
     } catch {
@@ -488,6 +497,30 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
           </div>
           <input className="ns-input" placeholder="Свой сайт" value={links.website} onChange={(e) => setLinks({ ...links, website: e.target.value })} />
         </div>
+
+        {canTheme && (
+          <div className="border-t border-[#242424] pt-3 space-y-2">
+            <span className="block text-xs tracking-widest text-[#666] uppercase">🎨 Цвет профиля</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setThemeColor(null)}
+                className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] text-[#888] ${themeColor === null ? 'border-white' : 'border-[#333]'}`}
+                title="По умолчанию"
+              >Off</button>
+              {THEME_PALETTE.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setThemeColor(c)}
+                  className={`w-8 h-8 rounded-full transition ${themeColor === c ? 'ring-2 ring-offset-2 ring-offset-[#111] ring-white scale-110' : ''}`}
+                  style={{ background: c }}
+                  aria-label={c}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-[#242424] pt-3">
           <button type="button" onClick={() => setShowPwd((s) => !s)} className="text-sm text-[#aaa] hover:text-white transition">

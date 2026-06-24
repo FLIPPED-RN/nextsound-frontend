@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Play, Pause, Disc3, Trash2 } from 'lucide-react';
+import { Play, Pause, Disc3, Trash2, Download, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { albumsApi } from '../api/albums.api';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { VerifiedBadge } from '../components/VerifiedBadge';
+import { isSubscriber } from '../lib/plans';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 
 export const AlbumPage = () => {
@@ -36,6 +37,9 @@ export const AlbumPage = () => {
   const cover = resolveAssetUrl(album.cover_path);
   const playAll = () => { if (tracks.length) setTrack(tracks[0], tracks); };
   const canDelete = !!user && (user.id === album.userId || user.role === 'admin');
+  const sub = isSubscriber(user);
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+  const downloadUrl = `${apiBase}/albums/${album.id}/download`;
 
   const handleDelete = async () => {
     if (!confirm(`Удалить альбом «${album.title}»? Треки останутся как отдельные синглы.`)) return;
@@ -72,6 +76,15 @@ export const AlbumPage = () => {
             <button onClick={playAll} className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition">
               <Play size={16} /> Слушать
             </button>
+            {sub ? (
+              <a href={downloadUrl} className="px-5 py-2.5 rounded-full border border-[#242424] text-sm font-medium inline-flex items-center gap-2 hover:border-white/50 transition" title="Скачать альбом (zip)">
+                <Download size={16} /> Скачать
+              </a>
+            ) : (
+              <button onClick={() => navigate('/premium')} className="px-5 py-2.5 rounded-full border border-[#242424] text-sm font-medium inline-flex items-center gap-2 text-[#aaa] hover:text-white hover:border-white/50 transition" title="Скачивание альбома — по подписке Plus">
+                <Lock size={15} /> Скачать
+              </button>
+            )}
             {canDelete && (
               <button onClick={handleDelete} title="Удалить альбом" className="w-10 h-10 rounded-full border border-[#242424] flex items-center justify-center text-[#888] hover:text-red-400 hover:border-red-400/50 transition">
                 <Trash2 size={16} />
