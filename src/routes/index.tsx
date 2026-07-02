@@ -12,6 +12,7 @@ import { PrivacyPage } from '../pages/PrivacyPage';
 import { TermsPage } from '../pages/TermsPage';
 import { OfferPage } from '../pages/OfferPage';
 import { RecommendationsPage } from '../pages/RecommendationsPage';
+import { CopyrightPage } from '../pages/CopyrightPage';
 import { useAuthStore } from '../store/auth.store';
 import { PlaylistPage } from '@/pages/PlaylistPage';
 import { AdminPage } from '../pages/AdminPage';
@@ -43,6 +44,7 @@ export const AppRouter = () => (
     <Route path="/offer" element={<OfferPage />} />
     <Route path="/payment" element={<Navigate to="/offer" replace />} />
     <Route path="/recommendations" element={<RecommendationsPage />} />
+    <Route path="/copyright" element={<CopyrightPage />} />
     <Route path="/" element={<MainLayout />}>
       <Route index element={<DiscoverPage />} />
       <Route path="discover" element={<DiscoverPage />} />

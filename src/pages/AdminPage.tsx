@@ -4,27 +4,34 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users, Music, Play, Heart, MessageCircle, ListMusic, HardDrive,
   Trash2, ShieldCheck, Search, TrendingUp, BadgeCheck, Star, Flag, Check,
+  Copyright, X, ExternalLink, Gauge,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminApi } from '../api/admin.api';
 import { playlistsApi } from '../api/playlists.api';
+import { copyrightApi } from '../api/copyright.api';
+import { analyticsApi } from '../api/analytics.api';
 import type { AdminStats, AdminUser } from '../api/admin.api';
 import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatNumber, formatCount, formatBytes, formatDate } from '@/lib/utils';
 import type { Track, Comment } from '@/types';
 
-type Tab = 'overview' | 'tracks' | 'users' | 'comments' | 'reports' | 'exclusive';
+type Tab = 'overview' | 'funnel' | 'tracks' | 'users' | 'comments' | 'reports' | 'copyright' | 'exclusive';
 
 export const AdminPage = () => {
   const [tab, setTab] = useState<Tab>('overview');
   const { data: reports } = useQuery({ queryKey: ['admin-reports'], queryFn: () => adminApi.getReports().then((r) => r.data) });
+  const { data: claims } = useQuery({ queryKey: ['admin-copyright'], queryFn: () => copyrightApi.list().then((r) => r.data) });
+  const newClaims = (claims || []).filter((c) => c.status === 'new').length;
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Обзор' },
+    { id: 'funnel', label: 'Воронка' },
     { id: 'tracks', label: 'Треки' },
     { id: 'users', label: 'Пользователи' },
     { id: 'comments', label: 'Комментарии' },
     { id: 'reports', label: `Жалобы${reports?.length ? ` (${reports.length})` : ''}` },
+    { id: 'copyright', label: `Копирайт${newClaims ? ` (${newClaims})` : ''}` },
     { id: 'exclusive', label: 'Эксклюзив' },
   ];
 
@@ -53,10 +60,12 @@ export const AdminPage = () => {
       </div>
 
       {tab === 'overview' && <Overview />}
+      {tab === 'funnel' && <FunnelTab />}
       {tab === 'tracks' && <TracksTab />}
       {tab === 'users' && <UsersTab />}
       {tab === 'comments' && <CommentsTab />}
       {tab === 'reports' && <ReportsTab />}
+      {tab === 'copyright' && <CopyrightTab />}
       {tab === 'exclusive' && <ExclusiveTab />}
     </div>
   );
@@ -385,6 +394,130 @@ const ReportsTab = () => {
         </div>
       ))}
       {!reports?.length && <p className="text-sm text-[#666] py-6 text-center">Жалоб нет.</p>}
+    </div>
+  );
+};
+
+const FunnelTab = () => {
+  const [days, setDays] = useState(30);
+  const { data: f, isLoading } = useQuery({ queryKey: ['admin-funnel', days], queryFn: () => analyticsApi.funnel(days).then((r) => r.data) });
+
+  if (isLoading || !f) return <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Array(4).fill(0).map((_, i) => <div key={i} className="h-24 bg-[#0e0e0e] rounded-2xl animate-pulse" />)}</div>;
+
+  const steps = [
+    { label: 'Просмотры /premium', value: f.counts.views, color: 'bg-violet-500' },
+    { label: 'Клики «Оформить/Подарить»', value: f.counts.clicks, color: 'bg-fuchsia-500' },
+    { label: 'Перешли к оплате', value: f.counts.created, color: 'bg-blue-500' },
+    { label: 'Оплатили', value: f.counts.paid, color: 'bg-emerald-500' },
+  ];
+  const max = Math.max(1, f.counts.views);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        {[7, 30, 90].map((d) => (
+          <button key={d} onClick={() => setDays(d)} className={`px-3 py-1.5 rounded-full text-sm transition ${days === d ? 'bg-white text-black font-semibold' : 'bg-[#151515] text-[#aaa] hover:text-white'}`}>{d} дн.</button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard icon={<Gauge size={14} />} label="Просмотр → клик" value={`${f.rates.viewToClick}%`} />
+        <StatCard icon={<Gauge size={14} />} label="Клик → оплата" value={`${f.rates.clickToPaid}%`} />
+        <StatCard icon={<Gauge size={14} />} label="Просмотр → оплата" value={`${f.rates.viewToPaid}%`} sub="итоговая конверсия" />
+        <StatCard icon={<Gauge size={14} />} label="Чекаут → оплата" value={`${f.rates.checkoutToPaid}%`} sub="доводимость оплаты" />
+      </div>
+
+      <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-2xl p-5 space-y-3">
+        <h3 className="text-sm font-semibold mb-2">Воронка за {days} дн.</h3>
+        {steps.map((s) => (
+          <div key={s.label}>
+            <div className="flex justify-between text-sm mb-1"><span className="text-[#bbb]">{s.label}</span><span className="font-semibold">{formatNumber(s.value)}</span></div>
+            <div className="h-2.5 rounded-full bg-[#1a1a1a] overflow-hidden">
+              <div className={`h-full ${s.color}`} style={{ width: `${Math.max(2, (s.value / max) * 100)}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {!!f.paidByPlan.length && (
+        <div className="bg-[#0e0e0e] border border-[#1a1a1a] rounded-2xl p-5">
+          <h3 className="text-sm font-semibold mb-3">Оплаты по тарифам</h3>
+          <div className="space-y-2 text-sm">
+            {f.paidByPlan.map((p) => (
+              <div key={p.plan} className="flex justify-between"><span className="text-[#aaa] capitalize">{p.plan}</span><span className="font-medium">{p.count}</span></div>
+            ))}
+          </div>
+        </div>
+      )}
+      <p className="text-xs text-[#666]">Данные накапливаются с момента релиза аналитики — на старте цифры будут расти постепенно.</p>
+    </div>
+  );
+};
+
+const CLAIM_STATUS: Record<string, { label: string; cls: string }> = {
+  new: { label: 'Новое', cls: 'bg-amber-500/15 text-amber-400' },
+  resolved: { label: 'Удалено/решено', cls: 'bg-emerald-500/15 text-emerald-400' },
+  rejected: { label: 'Отклонено', cls: 'bg-[#222] text-[#999]' },
+};
+
+const CopyrightTab = () => {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { data: claims, isLoading } = useQuery({ queryKey: ['admin-copyright'], queryFn: () => copyrightApi.list().then((r) => r.data) });
+
+  const setStatus = async (id: number, status: string) => {
+    try {
+      await copyrightApi.setStatus(id, status);
+      qc.invalidateQueries({ queryKey: ['admin-copyright'] });
+    } catch { toast.error('Не удалось'); }
+  };
+
+  const removeTrack = async (trackId: number, claimId: number) => {
+    if (!confirm('Удалить трек по обращению правообладателя? Файлы и все данные будут стёрты.')) return;
+    try {
+      await adminApi.deleteTrack(trackId);
+      await copyrightApi.setStatus(claimId, 'resolved');
+      toast.success('Трек удалён, обращение закрыто');
+      qc.invalidateQueries({ queryKey: ['admin-copyright'] });
+      qc.invalidateQueries({ queryKey: ['admin-tracks'] });
+      qc.invalidateQueries({ queryKey: ['admin-stats'] });
+    } catch { toast.error('Не удалось удалить'); }
+  };
+
+  if (isLoading) return <div className="space-y-2">{Array(4).fill(0).map((_, i) => <div key={i} className="h-20 bg-[#0e0e0e] rounded-lg animate-pulse" />)}</div>;
+
+  return (
+    <div className="space-y-2">
+      {(claims || []).map((c) => {
+        const st = CLAIM_STATUS[c.status] || CLAIM_STATUS.new;
+        return (
+          <div key={c.id} className="px-4 py-3 rounded-xl bg-[#0e0e0e] border border-[#1a1a1a]">
+            <div className="flex items-start gap-3">
+              <Copyright size={16} className="text-amber-400 shrink-0 mt-1" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold">{c.claimantName}</span>
+                  {c.claimantOrg && <span className="text-xs text-[#888]">· {c.claimantOrg}</span>}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
+                  <span className="text-xs text-[#666]">{formatDate(c.created_at)}</span>
+                </div>
+                <a href={`mailto:${c.claimantEmail}`} className="text-xs text-violet-300 hover:underline">{c.claimantEmail}</a>
+                <p className="text-sm text-[#c9c9c9] mt-1.5 break-words whitespace-pre-wrap">{c.description}</p>
+                <a href={c.trackUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#888] hover:text-white mt-1.5 break-all">
+                  <ExternalLink size={12} /> {c.trackUrl}
+                </a>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 justify-end mt-2 flex-wrap">
+              {c.trackId && <button onClick={() => navigate(`/track/${c.trackId}`)} className="text-xs px-3 py-1.5 rounded-full bg-[#181818] text-[#bbb] hover:text-white transition">Открыть трек</button>}
+              {c.trackId && <button onClick={() => removeTrack(c.trackId!, c.id)} className="text-xs px-3 py-1.5 rounded-full bg-red-500/15 text-red-400 hover:bg-red-500/25 transition inline-flex items-center gap-1"><Trash2 size={13} /> Удалить трек</button>}
+              <button onClick={() => setStatus(c.id, 'resolved')} className="text-xs px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 transition inline-flex items-center gap-1"><Check size={13} /> Решено</button>
+              <button onClick={() => setStatus(c.id, 'rejected')} className="text-xs px-3 py-1.5 rounded-full bg-[#181818] text-[#999] hover:text-white transition inline-flex items-center gap-1"><X size={13} /> Отклонить</button>
+            </div>
+          </div>
+        );
+      })}
+      {!claims?.length && <p className="text-sm text-[#666] py-6 text-center">Обращений правообладателей нет.</p>}
     </div>
   );
 };

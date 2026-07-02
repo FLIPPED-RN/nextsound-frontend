@@ -5,6 +5,7 @@ const links = [
   { to: '/terms', label: 'Пользовательское соглашение' },
   { to: '/offer', label: 'Публичная оферта' },
   { to: '/recommendations', label: 'Рекомендательные технологии' },
+  { to: '/copyright', label: 'Правообладателям' },
 ];
 
 export const Footer = () => (

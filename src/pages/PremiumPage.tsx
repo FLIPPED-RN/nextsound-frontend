@@ -4,6 +4,7 @@ import { Check, Crown, Sparkles, LoaderCircle, Gift, Copy, Users, X } from 'luci
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/auth.store';
 import { paymentsApi } from '../api/payments.api';
+import { analyticsApi } from '../api/analytics.api';
 import { PLANS, PLAN_LABELS, FREE_PERKS, effectivePlan } from '../lib/plans';
 
 export const PremiumPage = () => {
@@ -17,6 +18,10 @@ export const PremiumPage = () => {
   const [giftLoading, setGiftLoading] = useState(false);
 
   const refLink = user ? `${window.location.origin}/register?ref=${user.id}` : '';
+
+  useEffect(() => {
+    analyticsApi.event('premium_view');
+  }, []);
 
   useEffect(() => {
     if (params.get('paid') === '1') {
@@ -59,6 +64,7 @@ export const PremiumPage = () => {
 
   const subscribe = async (planId: string) => {
     if (current === planId) { toast('Это ваш текущий тариф'); return; }
+    analyticsApi.event('subscribe_click', planId);
     if (!user) { toast.error('Войдите, чтобы оформить подписку'); return; }
     setLoadingPlan(planId);
     try {
@@ -176,7 +182,7 @@ export const PremiumPage = () => {
               Оформи подписку на любой тариф для друга — ему придёт уведомление, а доступ активируется автоматически на 30 дней.
             </p>
             <button
-              onClick={() => setGiftOpen(true)}
+              onClick={() => { analyticsApi.event('gift_click', giftPlan); setGiftOpen(true); }}
               className="mt-4 w-full flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-400 text-white font-semibold text-sm py-3 rounded-xl transition"
             >
               <Gift size={16} /> Подарить
