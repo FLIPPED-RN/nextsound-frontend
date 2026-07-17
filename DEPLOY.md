@@ -24,7 +24,7 @@ VITE_API_URL=http://localhost:3000
    cd dist
    tar czf - . | ssh root@85.193.80.7 'rm -rf /var/www/nextsound && mkdir -p /var/www/nextsound && tar xzf - -C /var/www/nextsound'
    ```
-3. Открыть https://24nextsound.ru и нажать **Ctrl+F5**.
+3. Открыть https://nextsound.pro и нажать **Ctrl+F5**.
 
 ## Релиз
 1. Поднять `version` в `package.json` (синхронно с бэкендом).

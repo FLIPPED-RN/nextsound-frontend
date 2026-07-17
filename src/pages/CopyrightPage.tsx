@@ -58,7 +58,7 @@ export const CopyrightPage = () => {
             <input className="ns-input" type="email" placeholder="E-mail для связи *" value={form.claimantEmail} onChange={set('claimantEmail')} required />
           </div>
           <input className="ns-input" placeholder="Организация / правообладатель (если есть)" value={form.claimantOrg} onChange={set('claimantOrg')} />
-          <input className="ns-input" placeholder="Ссылка на материал (например, https://24nextsound.ru/track/123) *" value={form.trackUrl} onChange={set('trackUrl')} required />
+          <input className="ns-input" placeholder="Ссылка на материал (например, https://nextsound.pro/track/123) *" value={form.trackUrl} onChange={set('trackUrl')} required />
           <textarea className="ns-input resize-none h-32" placeholder="Опишите нарушение: что за произведение, чем подтверждаются ваши права *" value={form.description} onChange={set('description')} required />
 
           <label className="flex items-start gap-2.5 text-xs text-[#9a9a9a] leading-relaxed cursor-pointer">
