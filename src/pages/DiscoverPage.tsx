@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Crown, Lock, ChevronLeft, ChevronRight, Waves, LoaderCircle } from 'lucide-react';
+import { Play, Crown, Lock, ChevronLeft, ChevronRight, Waves, LoaderCircle, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tracksApi } from '../api/tracks.api';
 import { albumsApi } from '../api/albums.api';
 import { playlistsApi } from '../api/playlists.api';
+import { achievementsApi, type Progress } from '../api/achievements.api';
+import { effectivePlan } from '../lib/plans';
 import type { Playlist } from '@/types';
 import { TrackCard } from '@/components/TrackCard';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -163,6 +165,52 @@ const Top10 = ({ tracks }: { tracks: Track[] }) => {
   );
 };
 
+const QuickGrid = ({ tracks }: { tracks: Track[] }) => {
+  const { setTrack } = usePlayerStore();
+  if (tracks.length < 2) return null;
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+      {tracks.map((t) => (
+        <button key={t.id} onClick={() => setTrack(t, tracks)} className="group flex items-center gap-3 bg-[#161616] hover:bg-[#1f1f1f] rounded-xl overflow-hidden transition text-left">
+          <img src={resolveAssetUrl(t.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-14 h-14 object-cover shrink-0 bg-[#151515]" />
+          <span className="text-sm font-semibold truncate flex-1 pr-2">{t.title}</span>
+          <span className="w-9 h-9 mr-2 rounded-full bg-white text-black items-center justify-center hidden group-hover:flex shrink-0"><Play size={15} className="ml-0.5" /></span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const LevelStreak = ({ progress, onClick }: { progress: Progress; onClick: () => void }) => (
+  <button onClick={onClick} className="inline-flex items-center gap-2.5 rounded-full bg-[#141414] border border-[#222] px-3 py-1.5 hover:border-[#333] transition">
+    <span className="font-pixel text-[8px] text-fuchsia-200">LVL {progress.level}</span>
+    <span className="w-20 h-1.5 rounded-full bg-[#2a2a2a] overflow-hidden hidden sm:block"><span className="block h-full bg-fuchsia-500" style={{ width: `${progress.pct}%` }} /></span>
+    {progress.streak > 0 && <span className="text-xs font-semibold whitespace-nowrap">🔥 {progress.streak}</span>}
+  </button>
+);
+
+const PremiumTeaser = ({ onClick }: { onClick: () => void }) => (
+  <button onClick={onClick} className="w-full text-left rounded-2xl border border-violet-500/30 bg-gradient-to-r from-violet-600/15 via-fuchsia-600/10 to-transparent p-4 md:p-5 flex items-center gap-4 hover:brightness-125 transition">
+    <div className="w-11 h-11 rounded-xl bg-violet-500/20 flex items-center justify-center shrink-0"><Crown size={22} className="text-violet-300" /></div>
+    <div className="min-w-0 flex-1">
+      <h3 className="font-bold">NextSound Premium</h3>
+      <p className="text-sm text-[#bbb] truncate">Эксклюзив, расширенная статистика, кастомизация профиля — от 199 ₽/мес</p>
+    </div>
+    <ChevronRight size={20} className="text-[#888] shrink-0" />
+  </button>
+);
+
+const UploadCTA = ({ onClick }: { onClick: () => void }) => (
+  <button onClick={onClick} className="w-full text-left rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-emerald-600/12 to-transparent p-4 md:p-5 flex items-center gap-4 hover:brightness-125 transition">
+    <div className="w-11 h-11 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0"><Upload size={20} className="text-emerald-300" /></div>
+    <div className="min-w-0 flex-1">
+      <h3 className="font-bold">Поделись своей музыкой</h3>
+      <p className="text-sm text-[#bbb] truncate">Загрузи первый трек — это бесплатно, до 5 треков на Free</p>
+    </div>
+    <ChevronRight size={20} className="text-[#888] shrink-0" />
+  </button>
+);
+
 export const DiscoverPage = () => {
   const { user } = useAuthStore();
   const { data: tracks, isLoading } = useQuery({
@@ -186,6 +234,22 @@ export const DiscoverPage = () => {
     queryKey: ['exclusive-playlists'],
     queryFn: () => playlistsApi.getExclusive().then((r) => r.data),
   });
+  const { data: liked } = useQuery({
+    queryKey: ['home-liked'],
+    queryFn: () => tracksApi.getLiked().then((r) => r.data),
+    enabled: !!user,
+  });
+  const { data: achv } = useQuery({
+    queryKey: ['home-achv'],
+    queryFn: () => achievementsApi.mine().then((r) => r.data),
+    enabled: !!user,
+  });
+  const { data: myTracks } = useQuery({
+    queryKey: ['home-my-tracks'],
+    queryFn: () => tracksApi.getMy().then((r) => r.data),
+    enabled: !!user,
+  });
+  const navigate = useNavigate();
   const { setTrack } = usePlayerStore();
   const [flowLoading, setFlowLoading] = useState(false);
 
@@ -239,6 +303,20 @@ export const DiscoverPage = () => {
   const greeting = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
   const name = user?.nickname || user?.firstName;
 
+  // «Быстрый доступ» — недавнее прослушанное + любимое, без дублей.
+  const quickTracks = useMemo(() => {
+    const seen = new Set<number>();
+    const out: Track[] = [];
+    for (const t of [...(history || []), ...((liked || []).map((l) => l.track))]) {
+      if (t && !seen.has(t.id)) { seen.add(t.id); out.push(t); }
+    }
+    return out.slice(0, 6);
+  }, [history, liked]);
+
+  const progress = achv?.progress;
+  const isFree = !!user && effectivePlan(user) === 'free';
+  const noUploads = !!user && !!myTracks && myTracks.length === 0;
+
   return (
     <div className="px-4 md:px-8 py-5 space-y-8">
       <div className="flex items-center justify-between gap-3">
@@ -255,6 +333,19 @@ export const DiscoverPage = () => {
           Поток
         </button>
       </div>
+
+      {user && progress && (
+        <div className="-mt-4">
+          <LevelStreak progress={progress} onClick={() => navigate(`/artist/${user.id}`)} />
+        </div>
+      )}
+
+      {user && quickTracks.length >= 2 && (
+        <section className="space-y-3">
+          <h2 className="text-lg md:text-2xl font-bold">Быстрый доступ</h2>
+          <QuickGrid tracks={quickTracks} />
+        </section>
+      )}
 
       {featured && (
         <div className="relative overflow-hidden rounded-2xl border border-white/5">
@@ -296,10 +387,11 @@ export const DiscoverPage = () => {
         </div>
       )}
 
-      {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       {!!trending?.length && <Section title="🔥 В тренде за неделю" tracks={trending} loading={trendingLoading} />}
       <Top10 tracks={popular} />
+      {noUploads && <UploadCTA onClick={() => navigate('/upload')} />}
       <ExclusiveRow playlists={exclusive} />
+      {isFree && <PremiumTeaser onClick={() => navigate('/premium')} />}
       <NewArtists artists={newArtists} />
 
       <div className="space-y-3">
