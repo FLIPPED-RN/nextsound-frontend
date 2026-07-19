@@ -125,6 +125,43 @@ const ExclusiveRow = ({ playlists }: { playlists?: Playlist[] }) => {
   );
 };
 
+const Chip = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    onClick={onClick}
+    className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition ${active ? 'bg-white text-black' : 'bg-[#161616] text-[#bbb] hover:bg-[#1f1f1f] hover:text-white'}`}
+  >
+    {children}
+  </button>
+);
+
+const Top10 = ({ tracks }: { tracks: Track[] }) => {
+  const { setTrack } = usePlayerStore();
+  const list = tracks.slice(0, 10);
+  if (!list.length) return null;
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg md:text-2xl font-bold">Топ-10 треков</h2>
+      <div className="grid sm:grid-cols-2 gap-x-6 gap-y-0.5">
+        {list.map((t, i) => (
+          <button key={t.id} onClick={() => setTrack(t, list)} className="group flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition text-left">
+            <span className="w-6 text-center text-lg font-extrabold text-[#555] group-hover:text-white tabular-nums shrink-0">{i + 1}</span>
+            <img src={resolveAssetUrl(t.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-11 h-11 rounded-lg object-cover bg-[#151515] shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium truncate">{t.title}</p>
+              <p className="text-xs text-[#777] truncate flex items-center gap-1">
+                <span className="truncate">{t.user?.nickname || t.user?.firstName}</span>
+                <VerifiedBadge verified={t.user?.isArtistVerified} size={11} />
+              </p>
+            </div>
+            <span className="text-xs text-[#666] shrink-0 tabular-nums">{formatCount(t.plays_count)}</span>
+            <span className="w-8 h-8 rounded-full bg-white text-black items-center justify-center hidden group-hover:flex shrink-0"><Play size={14} className="ml-0.5" /></span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 export const DiscoverPage = () => {
   const { user } = useAuthStore();
   const { data: tracks, isLoading } = useQuery({
@@ -179,24 +216,44 @@ export const DiscoverPage = () => {
     return [...map.values()].sort((a, b) => +new Date(b.user.created_at) - +new Date(a.user.created_at)).slice(0, 12);
   }, [tracks]);
 
+  const genres = useMemo(() => {
+    const seen = new Map<string, string>(); // ключ в нижнем регистре -> отображаемое написание
+    (tracks || []).forEach((t) => {
+      (t.genre || '').split(',').forEach((raw) => {
+        const g = raw.trim();
+        // отсекаем мусор вроде «-»: нужен хотя бы 2-символьный жанр с буквой
+        if (g.length >= 2 && /\p{L}/u.test(g) && !seen.has(g.toLowerCase())) seen.set(g.toLowerCase(), g);
+      });
+    });
+    return [...seen.values()].slice(0, 12);
+  }, [tracks]);
+  const [genre, setGenre] = useState<string | null>(null);
+  const newList = useMemo(() => {
+    if (!genre) return tracks;
+    const g = genre.toLowerCase();
+    return (tracks || []).filter((t) => (t.genre || '').toLowerCase().split(',').map((s) => s.trim()).includes(g));
+  }, [tracks, genre]);
+
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
+  const name = user?.nickname || user?.firstName;
+
   return (
     <div className="px-4 md:px-8 py-5 space-y-8">
-      <button
-        onClick={startFlow}
-        disabled={flowLoading}
-        className="group relative w-full overflow-hidden rounded-2xl px-4 py-3.5 md:px-6 md:py-5 text-left flex items-center gap-3.5 md:gap-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:brightness-110 transition disabled:opacity-70"
-      >
-        <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">
-          {flowLoading ? <LoaderCircle size={24} className="animate-spin text-white" /> : <Waves size={26} className="text-white" />}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg md:text-2xl font-extrabold text-white leading-tight">Поток</h2>
-          <p className="text-white/80 text-xs md:text-sm leading-snug">Бесконечная волна музыки под тебя — нажми и слушай</p>
-        </div>
-        <span className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-black flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-          <Play size={18} className="ml-0.5" />
-        </span>
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl md:text-3xl font-extrabold truncate">
+          {name ? `${greeting}, ${name}` : 'Открой для себя музыку'}
+        </h1>
+        <button
+          onClick={startFlow}
+          disabled={flowLoading}
+          className="shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:brightness-110 transition disabled:opacity-70"
+          title="Бесконечная волна музыки под тебя"
+        >
+          {flowLoading ? <LoaderCircle size={16} className="animate-spin" /> : <Waves size={16} />}
+          Поток
+        </button>
+      </div>
 
       {featured && (
         <div className="relative overflow-hidden rounded-2xl border border-white/5">
@@ -240,10 +297,20 @@ export const DiscoverPage = () => {
 
       {!!history?.length && <Section title="Вы недавно слушали" tracks={history} loading={false} />}
       {!!trending?.length && <Section title="🔥 В тренде за неделю" tracks={trending} loading={trendingLoading} />}
+      <Top10 tracks={popular} />
       <ExclusiveRow playlists={exclusive} />
       <NewArtists artists={newArtists} />
-      <Section title="Новое" tracks={tracks} loading={isLoading} />
-      <Section title="Популярное" tracks={popular} loading={isLoading} />
+
+      <div className="space-y-3">
+        {genres.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto ns-row -mx-1 px-1 pb-1">
+            <Chip active={!genre} onClick={() => setGenre(null)}>Все</Chip>
+            {genres.map((g) => <Chip key={g} active={genre === g} onClick={() => setGenre(g)}>{g}</Chip>)}
+          </div>
+        )}
+        <Section title={genre ? `Новое · ${genre}` : 'Новое'} tracks={newList} loading={isLoading} />
+      </div>
+
       <AlbumsRow albums={recentAlbums} />
 
       {!isLoading && !tracks?.length && (
