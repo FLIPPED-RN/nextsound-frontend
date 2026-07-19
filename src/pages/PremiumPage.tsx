@@ -7,9 +7,19 @@ import { paymentsApi } from '../api/payments.api';
 import { analyticsApi } from '../api/analytics.api';
 import { PLANS, PLAN_LABELS, FREE_PERKS, effectivePlan } from '../lib/plans';
 
+// Русская форма слова по числу: [1 день, 2 дня, 5 дней]
+const plural = (n: number, forms: [string, string, string]) => {
+  const n10 = n % 10, n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return forms[0];
+  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return forms[1];
+  return forms[2];
+};
+
 export const PremiumPage = () => {
   const { user, fetchMe } = useAuthStore();
   const current = effectivePlan(user);
+  const expiresAt = current !== 'free' && user?.planExpires ? new Date(user.planExpires) : null;
+  const daysLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86_400_000)) : null;
   const [params, setParams] = useSearchParams();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [giftOpen, setGiftOpen] = useState(false);
@@ -87,9 +97,20 @@ export const PremiumPage = () => {
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">Больше музыки. Больше возможностей.</h1>
         <p className="text-[#9a9a9a] mt-3">Базовые функции всегда бесплатны. Подписка открывает эксклюзив и снимает лимиты.</p>
         {current !== 'free' && (
-          <p className="mt-4 inline-flex items-center gap-2 text-sm bg-violet-500/15 text-violet-200 px-4 py-1.5 rounded-full">
-            <Crown size={14} /> Ваш тариф: {PLAN_LABELS[current]}
-          </p>
+          <div className="mt-4 flex flex-col items-center gap-1.5">
+            <span className="inline-flex items-center gap-2 text-sm bg-violet-500/15 text-violet-200 px-4 py-1.5 rounded-full">
+              <Crown size={14} /> Ваш тариф: {PLAN_LABELS[current]}
+            </span>
+            {daysLeft !== null && expiresAt && (
+              <span className={`text-xs ${daysLeft <= 3 ? 'text-amber-300' : 'text-[#888]'}`}>
+                {daysLeft === 0
+                  ? 'истекает сегодня'
+                  : `осталось ${daysLeft} ${plural(daysLeft, ['день', 'дня', 'дней'])}`}
+                {' · до '}
+                {expiresAt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            )}
+          </div>
         )}
       </div>
 

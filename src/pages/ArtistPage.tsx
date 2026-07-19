@@ -13,6 +13,7 @@ import { useAuthStore } from '../store/auth.store';
 import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
 import { PlanBadge } from '../components/PlanBadge';
+import { ImageCropModal } from '../components/ImageCropModal';
 import { isSubscriber } from '../lib/plans';
 
 const THEME_PALETTE = ['#a855f7', '#6366f1', '#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
@@ -54,6 +55,7 @@ export const ArtistPage = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const avatarInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
+  const [crop, setCrop] = useState<{ src: string; kind: 'avatar' | 'banner' } | null>(null);
 
   const { data: followInfo } = useQuery({
     queryKey: ['follow-info', userId],
@@ -161,32 +163,27 @@ export const ArtistPage = () => {
 
   const handlePlayAll = () => { if (sorted.length) setTrack(sorted[0], sorted); };
 
-  const handleAvatarPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // выбор файла лишь открывает кроп; загрузка — после подтверждения
+  const pickForCrop = (kind: 'avatar' | 'banner') => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = ''; // чтобы повторный выбор того же файла срабатывал
     if (!file) return;
-    setUploadingAvatar(true);
-    try {
-      await uploadAvatar(file);
-      qc.invalidateQueries({ queryKey: ['artist', userId] });
-      toast.success('Фото обновлено');
-    } catch {
-      toast.error('Не удалось загрузить фото');
-    } finally {
-      setUploadingAvatar(false);
-    }
+    setCrop({ src: URL.createObjectURL(file), kind });
   };
 
-  const handleBannerPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingBanner(true);
+  const handleCropDone = async (file: File) => {
+    if (!crop) return;
+    const isAvatar = crop.kind === 'avatar';
+    isAvatar ? setUploadingAvatar(true) : setUploadingBanner(true);
     try {
-      await uploadBanner(file);
+      await (isAvatar ? uploadAvatar(file) : uploadBanner(file));
       qc.invalidateQueries({ queryKey: ['artist', userId] });
-      toast.success('Обложка профиля обновлена');
+      toast.success(isAvatar ? 'Фото обновлено' : 'Обложка профиля обновлена');
+      setCrop(null);
     } catch {
-      toast.error('Не удалось загрузить обложку');
+      toast.error(isAvatar ? 'Не удалось загрузить фото' : 'Не удалось загрузить обложку');
     } finally {
+      setUploadingAvatar(false);
       setUploadingBanner(false);
     }
   };
@@ -208,8 +205,8 @@ export const ArtistPage = () => {
 
         {isOwn && (
           <>
-            <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={handleAvatarPick} />
-            <input ref={bannerInput} type="file" accept="image/*" className="hidden" onChange={handleBannerPick} />
+            <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={pickForCrop('avatar')} />
+            <input ref={bannerInput} type="file" accept="image/*" className="hidden" onChange={pickForCrop('banner')} />
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
               <button
                 onClick={() => bannerInput.current?.click()}
@@ -409,6 +406,18 @@ export const ArtistPage = () => {
       </div>
 
       {editing && me && <EditProfileModal onClose={() => setEditing(false)} />}
+
+      {crop && (
+        <ImageCropModal
+          src={crop.src}
+          aspect={crop.kind === 'avatar' ? 1 : 4 / 1}
+          round={crop.kind === 'avatar'}
+          outputWidth={crop.kind === 'avatar' ? 512 : 1600}
+          title={crop.kind === 'avatar' ? 'Фото профиля' : 'Обложка профиля'}
+          onCancel={() => setCrop(null)}
+          onDone={handleCropDone}
+        />
+      )}
     </div>
   );
 };
