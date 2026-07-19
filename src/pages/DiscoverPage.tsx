@@ -9,6 +9,7 @@ import { playlistsApi } from '../api/playlists.api';
 import type { Playlist } from '@/types';
 import { TrackCard } from '@/components/TrackCard';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { ArtistLink } from '@/components/ArtistLink';
 import type { Album } from '@/types';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
@@ -94,7 +95,7 @@ const AlbumsRow = ({ albums }: { albums?: Album[] }) => {
               <img src={resolveAssetUrl(a.cover_path)} onError={(e) => { (e.target as HTMLImageElement).src = '/default-cover.png'; }} className="w-full h-full object-cover group-hover:scale-105 transition" />
             </div>
             <p className="text-sm font-medium truncate mt-2">{a.title}</p>
-            <p className="text-xs text-[#666] truncate">{a.user?.nickname || a.user?.firstName} · {a.trackCount} тр.</p>
+            <p className="text-xs text-[#666] truncate"><ArtistLink user={a.user} id={a.userId} /> · {a.trackCount} тр.</p>
           </button>
         ))}
       </div>
@@ -149,7 +150,7 @@ const Top10 = ({ tracks }: { tracks: Track[] }) => {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{t.title}</p>
               <p className="text-xs text-[#777] truncate flex items-center gap-1">
-                <span className="truncate">{t.user?.nickname || t.user?.firstName}</span>
+                <ArtistLink user={t.user} id={t.userId} className="truncate" />
                 <VerifiedBadge verified={t.user?.isArtistVerified} size={11} />
               </p>
             </div>
@@ -279,7 +280,7 @@ export const DiscoverPage = () => {
               <span className="inline-flex items-center gap-1.5 text-[10px] md:text-xs font-semibold tracking-wide text-violet-200 bg-violet-500/20 px-2.5 py-1 rounded-full">✦ Рекомендуем</span>
               <h1 className="text-xl sm:text-4xl md:text-5xl font-extrabold mt-2 sm:mt-3 line-clamp-2 sm:truncate leading-tight">{featured.title}</h1>
               <p className="text-xs sm:text-sm text-[#bbb] mt-1.5 flex items-center gap-1 flex-wrap">
-                <span className="truncate max-w-[140px] sm:max-w-none">{featured.user?.nickname || featured.user?.firstName}</span>
+                <ArtistLink user={featured.user} id={featured.userId} className="truncate max-w-[140px] sm:max-w-none" />
                 <VerifiedBadge verified={featured.user?.isArtistVerified} />
                 <span className="text-[#777]">· {formatCount(featured.plays_count)} прослуш.</span>
                 {featured.genre && <span className="text-violet-300/80 hidden sm:inline">· {featured.genre}</span>}

@@ -5,6 +5,7 @@ import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl } from '@/lib/utils';
 import { ScrollingText } from './ScrollingText';
 import { VerifiedBadge } from './VerifiedBadge';
+import { ArtistLink } from './ArtistLink';
 import type { Track } from '@/types';
 
 export const TrackCard = ({ track }: { track: Track }) => {
@@ -38,7 +39,7 @@ export const TrackCard = ({ track }: { track: Track }) => {
       <div>
         <ScrollingText text={track.title} className="font-semibold" />
         <p className="text-sm text-[#888888] truncate flex items-center gap-1">
-          <span className="truncate">{track.user?.nickname || track.user?.firstName}{track.featuring ? ` feat. ${track.featuring}` : ''}</span>
+          <ArtistLink user={track.user} id={track.userId} className="truncate" />{track.featuring ? ` feat. ${track.featuring}` : ''}
           <VerifiedBadge verified={track.user?.isArtistVerified} size={13} />
         </p>
         <p className="text-xs text-[#888888] mt-1">{track.plays_count} прослушиваний</p>

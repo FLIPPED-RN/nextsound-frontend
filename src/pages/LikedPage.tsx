@@ -6,6 +6,7 @@ import { usePlayerStore } from '../store/player.store';
 import { resolveAssetUrl, formatCount } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
 import { VerifiedBadge } from '../components/VerifiedBadge';
+import { ArtistLink } from '../components/ArtistLink';
 
 export const LikedPage = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ export const LikedPage = () => {
                   <div className="min-w-0">
                     <ScrollingText text={t.title} className={`text-sm font-medium ${isCurrent ? 'text-white' : ''}`} />
                     <p className="text-xs text-[#666] truncate flex items-center gap-1">
-                      <span className="truncate">{t.user?.nickname || t.user?.firstName}</span>
+                      <ArtistLink user={t.user} id={t.userId} className="truncate" />
                       <VerifiedBadge verified={t.user?.isArtistVerified} size={12} />
                     </p>
                   </div>

@@ -3,6 +3,7 @@ import { tracksApi } from '../api/tracks.api';
 import { resolveAssetUrl } from '../lib/utils';
 import { ScrollingText } from './ScrollingText';
 import { VerifiedBadge } from './VerifiedBadge';
+import { ArtistLink } from './ArtistLink';
 
 import {
   Play,
@@ -191,7 +192,7 @@ export const Player = () => {
               <div className="min-w-0 flex-1">
                 <ScrollingText text={currentTrack.title} className="text-2xl font-bold" />
                 <p className="text-[#888] mt-1 truncate flex items-center gap-1">
-                  <span className="truncate">{currentTrack.user?.nickname || currentTrack.user?.firstName}</span>
+                  <ArtistLink user={currentTrack.user} id={currentTrack.userId} className="truncate" onNavigate={() => setPlayerExpanded(false)} />
                   <VerifiedBadge verified={currentTrack.user?.isArtistVerified} size={14} />
                 </p>
               </div>
@@ -275,7 +276,7 @@ export const Player = () => {
           <div className="min-w-0 flex-1">
             <ScrollingText text={currentTrack.title} className="text-sm font-medium" />
             <p className="text-xs text-[#888888] truncate flex items-center gap-1">
-              <span className="truncate">{currentTrack.user?.nickname || currentTrack.user?.firstName}</span>
+              <ArtistLink user={currentTrack.user} id={currentTrack.userId} className="truncate" />
               <VerifiedBadge verified={currentTrack.user?.isArtistVerified} size={12} />
             </p>
           </div>
@@ -308,7 +309,7 @@ export const Player = () => {
           <div className="min-w-0">
             <ScrollingText text={currentTrack.title} className="text-sm font-medium" />
             <p className="text-xs text-[#888888] truncate flex items-center gap-1">
-              <span className="truncate">{currentTrack.user?.nickname || currentTrack.user?.firstName}</span>
+              <ArtistLink user={currentTrack.user} id={currentTrack.userId} className="truncate" />
               <VerifiedBadge verified={currentTrack.user?.isArtistVerified} size={12} />
             </p>
           </div>
