@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, LoaderCircle } from 'lucide-react'
 import { useAuthStore } from '../store/auth.store';
 import { AuthShell, AuthInput } from '../components/AuthShell';
 import { VerifyForm } from '../components/VerifyForm';
+import { ForgotPasswordForm } from '../components/ForgotPasswordForm';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [forgot, setForgot] = useState(false);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
@@ -42,6 +44,18 @@ export const LoginPage = () => {
     );
   }
 
+  if (forgot) {
+    return (
+      <AuthShell>
+        <ForgotPasswordForm
+          initialEmail={email}
+          onBack={() => setForgot(false)}
+          onDone={(em) => { setEmail(em); setPassword(''); setForgot(false); }}
+        />
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell>
       <h1 className="text-3xl font-bold">С возвращением</h1>
@@ -66,6 +80,12 @@ export const LoginPage = () => {
             </button>
           }
         />
+
+        <div className="flex justify-end -mt-1">
+          <button type="button" onClick={() => setForgot(true)} className="text-xs text-[#888] hover:text-white transition">
+            Забыли пароль?
+          </button>
+        </div>
 
         <button
           type="submit"

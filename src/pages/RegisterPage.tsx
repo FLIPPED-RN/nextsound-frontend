@@ -9,6 +9,7 @@ import { VerifyForm } from '../components/VerifyForm';
 export const RegisterPage = () => {
   const [form, setForm] = useState({ firstName: '', lastName: '', nickname: '', email: '', password: '' });
   const [consents, setConsents] = useState({ legal: false, marketing: false });
+  const [confirm, setConfirm] = useState('');
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ export const RegisterPage = () => {
     e.preventDefault();
     setError('');
     if (form.password.length < 6) { setError('Пароль должен быть не короче 6 символов'); return; }
+    if (form.password !== confirm) { setError('Пароли не совпадают'); return; }
     if (!consents.legal) { toast.error('Примите Политику конфиденциальности и Пользовательское соглашение'); return; }
     setLoading(true);
     try {
@@ -91,6 +93,15 @@ export const RegisterPage = () => {
               {show ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           }
+        />
+        <AuthInput
+          icon={<Lock size={18} />}
+          type={show ? 'text' : 'password'}
+          placeholder="Повторите пароль"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          required
+          autoComplete="new-password"
         />
 
         <div className="space-y-2.5 pt-1">
