@@ -1,6 +1,6 @@
 import type { Track } from '@/types';
 import { create } from 'zustand';
-import { resolveAssetUrl } from '@/lib/utils';
+import { resolveAssetUrl, getDeviceId } from '@/lib/utils';
 import { tracksApi } from '@/api/tracks.api';
 
 interface PlayerState {
@@ -187,7 +187,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     setMediaMetadata(track);
     if (hasMediaSession()) navigator.mediaSession.playbackState = 'playing';
 
-    tracksApi.incrementPlay(track.id).catch(() => {});
+    tracksApi.incrementPlay(track.id, getDeviceId()).catch(() => {});
 
     set({
       currentTrack: track,

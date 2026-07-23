@@ -13,6 +13,24 @@ export function resolveAssetUrl(path?: string | null): string {
   return `${base}/${clean.replace(/^\//, "")}`;
 }
 
+// Стабильный идентификатор устройства для дедупликации анонимных прослушиваний
+// (1 устройство без входа = 1 прослушивание трека). Хранится в localStorage.
+export function getDeviceId(): string {
+  const KEY = "ns_device_id";
+  try {
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "no-storage";
+  }
+}
+
 export function getImageAccent(url: string): Promise<[number, number, number] | null> {
   return new Promise((resolve) => {
     if (!url) { resolve(null); return; }

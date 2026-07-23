@@ -14,7 +14,7 @@ export const tracksApi = {
   update: (id: number, data: Partial<CreateTrackDto>) =>
     apiClient.patch<Track>(`/tracks/${id}`, data),
   delete: (id: number) => apiClient.delete(`/tracks/${id}`),
-  incrementPlay: (id: number) => apiClient.post(`/tracks/${id}/play`),
+  incrementPlay: (id: number, deviceId?: string) => apiClient.post(`/tracks/${id}/play`, { deviceId }),
   toggleLike: (id: number) => apiClient.post<{ liked: boolean }>(`/tracks/${id}/like`),
   getLikes: (id: number) => apiClient.get<{ count: number; liked: boolean }>(`/tracks/${id}/likes`),
   toggleRepost: (id: number) => apiClient.post<{ reposted: boolean }>(`/tracks/${id}/repost`),
