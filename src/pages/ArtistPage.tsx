@@ -10,7 +10,7 @@ import { achievementsApi } from '../api/achievements.api';
 import { PixelAchievements } from '../components/PixelAchievements';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
-import { resolveAssetUrl, formatCount, formatNumber } from '@/lib/utils';
+import { resolveAssetUrl, formatNumber } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
 import { PlanBadge } from '../components/PlanBadge';
 import { ImageCropModal } from '../components/ImageCropModal';
@@ -141,7 +141,6 @@ export const ArtistPage = () => {
   }
 
   const name = displayArtist.nickname || `${displayArtist.firstName} ${displayArtist.lastName}`;
-  const totalPlays = (tracks || []).reduce((s, t) => s + (t.plays_count || 0), 0);
   const trackCount = tracks?.length || 0;
   const isVerified = !!displayArtist.isArtistVerified;
   const banner = displayArtist.banner
@@ -249,7 +248,6 @@ export const ArtistPage = () => {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#8a8a8a]">
           <span><span className="text-white font-semibold">{formatNumber(followers)}</span> подписчиков</span>
           <span><span className="text-white font-semibold">{trackCount}</span> {trackCount === 1 ? 'трек' : 'треков'}</span>
-          <span><span className="text-white font-semibold">{formatCount(totalPlays)}</span> прослушиваний</span>
           <span>с <span className="text-white font-semibold">{memberSince}</span></span>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
@@ -321,8 +319,8 @@ export const ArtistPage = () => {
 
         {tab === 'tracks' && (
           <>
-            <div className="hidden md:grid grid-cols-[24px_1fr_120px_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
-              <span>#</span><span>Название</span><span className="text-right">Прослушивания</span><span className="text-right">Дата</span><span></span>
+            <div className="hidden md:grid grid-cols-[24px_1fr_140px_40px] gap-4 px-3 pb-2 text-xs text-[#666] uppercase tracking-wider border-b border-[#1a1a1a]">
+              <span>#</span><span>Название</span><span className="text-right">Дата</span><span></span>
             </div>
             <div className="mt-1">
               {visible.map((t, i) => (
@@ -392,13 +390,12 @@ export const ArtistPage = () => {
           <p className="text-sm text-[#bdbdbd] leading-relaxed whitespace-pre-line">
             {displayArtist.bio?.trim()
               ? displayArtist.bio
-              : `${name} — артист на NextSound.${trackCount > 0 ? ` ${trackCount} ${trackCount === 1 ? 'трек' : 'треков'}, ${formatNumber(totalPlays)} прослушиваний.` : ' Пока без публикаций.'}`}
+              : `${name} — артист на NextSound.${trackCount > 0 ? ` ${trackCount} ${trackCount === 1 ? 'трек' : 'треков'}.` : ' Пока без публикаций.'}`}
           </p>
         </div>
         <div>
           <h3 className="text-xs tracking-widest text-[#666] uppercase mb-3">Статистика</h3>
           <dl className="space-y-3 text-sm">
-            <StatRow k="Всего прослушиваний" v={formatNumber(totalPlays)} />
             <StatRow k="Треков" v={String(trackCount)} />
             <StatRow k="На сайте с" v={String(memberSince)} />
           </dl>
@@ -563,7 +560,7 @@ const TrackRow = ({ t, index, isPlaying, isCurrent, liked, onLike, onPlay, onOpe
   const cover = resolveAssetUrl(t.cover_path);
   const released = new Date(t.release_date || t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return (
-    <div className={`group grid grid-cols-[24px_1fr_auto] md:grid-cols-[24px_1fr_120px_140px_40px] gap-3 md:gap-4 items-center px-3 py-2 rounded-lg transition ${isCurrent ? 'bg-white/5' : 'hover:bg-white/5'}`}>
+    <div className={`group grid grid-cols-[24px_1fr_auto] md:grid-cols-[24px_1fr_140px_40px] gap-3 md:gap-4 items-center px-3 py-2 rounded-lg transition ${isCurrent ? 'bg-white/5' : 'hover:bg-white/5'}`}>
       <button onClick={onPlay} className="w-6 flex items-center justify-center text-[#888]">
         {isCurrent ? (
           isPlaying ? <BarChart3 size={15} className="text-white" /> : <Pause size={14} className="text-white" />
@@ -581,7 +578,6 @@ const TrackRow = ({ t, index, isPlaying, isCurrent, liked, onLike, onPlay, onOpe
           {t.genre && <p className="text-xs text-[#666] truncate">{t.genre}</p>}
         </div>
       </div>
-      <span className="text-sm text-[#888] text-right hidden md:block">{formatCount(t.plays_count)}</span>
       <span className="text-sm text-[#888] text-right hidden md:block">{released}</span>
       <button
         onClick={(e) => { e.stopPropagation(); onLike(); }}

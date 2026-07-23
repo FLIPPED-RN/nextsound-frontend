@@ -361,7 +361,6 @@ export const TrackPage = () => {
           </button>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5">
-            <Stat icon={<Play size={14} />} value={formatCount(track.plays_count)} label="прослушиваний" />
             <Stat icon={<Heart size={14} />} value={formatCount(likeCount)} label="лайков" />
             <Stat icon={<MessageCircle size={14} />} value={formatCount(commentsCount)} label="комментария" />
             <Stat icon={<Repeat2 size={14} />} value={formatCount(repostCount)} label="репостов" />

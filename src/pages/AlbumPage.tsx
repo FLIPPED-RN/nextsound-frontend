@@ -7,7 +7,7 @@ import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { isSubscriber } from '../lib/plans';
-import { resolveAssetUrl, formatCount } from '@/lib/utils';
+import { resolveAssetUrl } from '@/lib/utils';
 
 export const AlbumPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -70,7 +70,7 @@ export const AlbumPage = () => {
             <VerifiedBadge verified={album.user?.isArtistVerified} />
           </button>
           <p className="text-sm text-[#666] mt-2">
-            {album.trackCount} {album.trackCount === 1 ? 'трек' : 'треков'} · {formatCount(album.plays || 0)} прослушиваний
+            {album.trackCount} {album.trackCount === 1 ? 'трек' : 'треков'}
           </p>
           <div className="flex items-center gap-2 mt-5">
             <button onClick={playAll} className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold inline-flex items-center gap-2 hover:scale-105 transition">
@@ -109,7 +109,6 @@ export const AlbumPage = () => {
                   {t.genre && <p className="text-xs text-[#666] truncate">{t.genre}</p>}
                 </div>
               </div>
-              <span className="text-xs text-[#888] flex items-center gap-1 pr-2"><Play size={11} /> {formatCount(t.plays_count)}</span>
             </div>
           );
         })}

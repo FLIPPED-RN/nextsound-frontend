@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Play, Pause } from 'lucide-react';
 import { tracksApi } from '../api/tracks.api';
 import { usePlayerStore } from '../store/player.store';
-import { resolveAssetUrl, formatCount } from '@/lib/utils';
+import { resolveAssetUrl } from '@/lib/utils';
 import { ScrollingText } from '../components/ScrollingText';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { ArtistLink } from '../components/ArtistLink';
@@ -67,7 +67,6 @@ export const LikedPage = () => {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs text-[#666] pr-2">{formatCount(t.plays_count)}</span>
               </div>
             );
           })}

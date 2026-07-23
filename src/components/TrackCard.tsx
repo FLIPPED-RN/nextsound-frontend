@@ -42,7 +42,6 @@ export const TrackCard = ({ track }: { track: Track }) => {
           <ArtistLink user={track.user} id={track.userId} className="truncate" />{track.featuring ? ` feat. ${track.featuring}` : ''}
           <VerifiedBadge verified={track.user?.isArtistVerified} size={13} />
         </p>
-        <p className="text-xs text-[#888888] mt-1">{track.plays_count} прослушиваний</p>
       </div>
     </div>
   );

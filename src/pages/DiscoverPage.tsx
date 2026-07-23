@@ -15,7 +15,7 @@ import { ArtistLink } from '@/components/ArtistLink';
 import type { Album } from '@/types';
 import { usePlayerStore } from '../store/player.store';
 import { useAuthStore } from '../store/auth.store';
-import { resolveAssetUrl, formatCount } from '@/lib/utils';
+import { resolveAssetUrl } from '@/lib/utils';
 import type { Track, User } from '@/types';
 
 const RowHeader = ({ title, scrollRef }: { title: React.ReactNode; scrollRef: React.RefObject<HTMLDivElement | null> }) => {
@@ -156,7 +156,6 @@ const Top10 = ({ tracks }: { tracks: Track[] }) => {
                 <VerifiedBadge verified={t.user?.isArtistVerified} size={11} />
               </p>
             </div>
-            <span className="text-xs text-[#666] shrink-0 tabular-nums">{formatCount(t.plays_count)}</span>
             <span className="w-8 h-8 rounded-full bg-white text-black items-center justify-center hidden group-hover:flex shrink-0"><Play size={14} className="ml-0.5" /></span>
           </button>
         ))}
@@ -373,7 +372,6 @@ export const DiscoverPage = () => {
               <p className="text-xs sm:text-sm text-[#bbb] mt-1.5 flex items-center gap-1 flex-wrap">
                 <ArtistLink user={featured.user} id={featured.userId} className="truncate max-w-[140px] sm:max-w-none" />
                 <VerifiedBadge verified={featured.user?.isArtistVerified} />
-                <span className="text-[#777]">· {formatCount(featured.plays_count)} прослуш.</span>
                 {featured.genre && <span className="text-violet-300/80 hidden sm:inline">· {featured.genre}</span>}
               </p>
               <button
